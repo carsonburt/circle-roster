@@ -31,6 +31,8 @@ export default function AdminPanel() {
   // Attendance
   const [meetingForm, setMeetingForm] = useState({ title: '', date: '' })
   const [expandedMeeting, setExpandedMeeting] = useState(null)
+  const [attendanceFrom, setAttendanceFrom] = useState('')
+  const [attendanceTo, setAttendanceTo] = useState('')
 
   // Member form
   const [form, setForm] = useState(EMPTY_FORM)
@@ -637,47 +639,90 @@ export default function AdminPanel() {
         </section>
 
         {/* Member attendance summary */}
-        {sortedMeetings.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-1">Member Summary</h2>
-            <p className="text-sm text-slate-500 mb-4">Attendance rate across all recorded meetings.</p>
-            <div className="space-y-2">
-              {activeMembers
-                .map(m => {
-                  const attended = sortedMeetings.filter(mtg => mtg.attendee_ids.includes(m.id)).length
-                  const total = sortedMeetings.length
-                  const pct = total ? Math.round((attended / total) * 100) : 0
-                  return { m, attended, total, pct }
-                })
-                .sort((a, b) => a.pct - b.pct)
-                .map(({ m, attended, total, pct }) => (
-                  <div key={m.id} className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
-                      {m.avatar_url
-                        ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
-                        : `${m.first_name[0]}${m.last_name[0]}`
-                      }
-                    </div>
-                    <span className="text-sm text-slate-700 w-36 flex-shrink-0 truncate">{m.first_name} {m.last_name}</span>
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'
-                        }}
-                      />
-                    </div>
-                    <span className={`text-xs font-semibold tabular-nums w-14 text-right flex-shrink-0 ${
-                      pct >= 80 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'
-                    }`}>
-                      {attended}/{total} ({pct}%)
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </section>
-        )}
+        {sortedMeetings.length > 0 && (() => {
+          const filteredMeetings = sortedMeetings.filter(mtg => {
+            if (attendanceFrom && mtg.date < attendanceFrom) return false
+            if (attendanceTo && mtg.date > attendanceTo) return false
+            return true
+          })
+          const hasFilter = attendanceFrom || attendanceTo
+          return (
+            <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Member Summary</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {hasFilter
+                      ? `${filteredMeetings.length} meeting${filteredMeetings.length !== 1 ? 's' : ''} in selected range`
+                      : `Attendance rate across all ${sortedMeetings.length} meetings`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                  <input
+                    type="date"
+                    value={attendanceFrom}
+                    onChange={e => setAttendanceFrom(e.target.value)}
+                    className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                  />
+                  <span className="text-xs text-slate-400">to</span>
+                  <input
+                    type="date"
+                    value={attendanceTo}
+                    onChange={e => setAttendanceTo(e.target.value)}
+                    className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                  />
+                  {hasFilter && (
+                    <button
+                      onClick={() => { setAttendanceFrom(''); setAttendanceTo('') }}
+                      className="text-xs text-slate-400 hover:text-slate-600 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+              {filteredMeetings.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-6">No meetings in this date range.</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeMembers
+                    .map(m => {
+                      const attended = filteredMeetings.filter(mtg => mtg.attendee_ids.includes(m.id)).length
+                      const total = filteredMeetings.length
+                      const pct = total ? Math.round((attended / total) * 100) : 0
+                      return { m, attended, total, pct }
+                    })
+                    .sort((a, b) => a.pct - b.pct)
+                    .map(({ m, attended, total, pct }) => (
+                      <div key={m.id} className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+                          {m.avatar_url
+                            ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                            : `${m.first_name[0]}${m.last_name[0]}`
+                          }
+                        </div>
+                        <span className="text-sm text-slate-700 w-36 flex-shrink-0 truncate">{m.first_name} {m.last_name}</span>
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'
+                            }}
+                          />
+                        </div>
+                        <span className={`text-xs font-semibold tabular-nums w-14 text-right flex-shrink-0 ${
+                          pct >= 80 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'
+                        }`}>
+                          {attended}/{total} ({pct}%)
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </section>
+          )
+        })()}
 
         </>}
 
