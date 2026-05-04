@@ -23,7 +23,7 @@ export default function AdminPanel() {
     toggleDuesForTerm, setAllDuesForTerm, updateTermLabel, finalizeTerm,
     addMeeting, deleteMeeting, toggleAttendee, setMeetingAttendees,
     addPoll, deletePoll, closePoll,
-    pendingEdits, approveEdit, rejectEdit,
+    pendingEdits, approveEdit, rejectEdit, resetAllPasswords,
   } = useChapter()
 
   // Active tab
@@ -78,6 +78,13 @@ export default function AdminPanel() {
 
   // Email
   const [emailAnn, setEmailAnn] = useState(null) // { ann, type }
+
+  // Password management
+  const [passwordModal, setPasswordModal] = useState(null)
+  const [passwordModalValue, setPasswordModalValue] = useState('')
+  const [passwordModalSaved, setPasswordModalSaved] = useState(false)
+  const [bulkPassword, setBulkPassword] = useState('')
+  const [bulkPasswordSaved, setBulkPasswordSaved] = useState(false)
 
   // Invite
   const [showInvite, setShowInvite] = useState(false)
@@ -482,6 +489,13 @@ export default function AdminPanel() {
                   </button>
                   <button onClick={() => handleToggleAlumni(m)} className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors">
                     {m.status === 'alumni' ? 'Active' : 'Alumni'}
+                  </button>
+                  <button
+                    onClick={() => { setPasswordModal(m); setPasswordModalValue(''); setPasswordModalSaved(false) }}
+                    className="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                    title="Set password"
+                  >
+                    🔑
                   </button>
                   <button onClick={() => startEdit(m)} className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors">
                     Edit
@@ -1399,6 +1413,34 @@ export default function AdminPanel() {
               <div className={`absolute top-1.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${chapter.member_edits_require_approval ? 'translate-x-7' : 'translate-x-1.5'}`} />
             </button>
           </div>
+          <div className="pt-4">
+            <p className="text-sm font-semibold text-slate-900 mb-0.5">Reset all member passwords</p>
+            <p className="text-xs text-slate-400 mb-3">Set a single new password for every member at once. Default is "password" if none is set.</p>
+            <div className="flex gap-2 max-w-xs">
+              <input
+                type="text"
+                placeholder="New password for all"
+                value={bulkPassword}
+                onChange={e => { setBulkPassword(e.target.value); setBulkPasswordSaved(false) }}
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              />
+              <button
+                onClick={() => {
+                  if (!bulkPassword.trim()) return
+                  if (!confirm(`Set password to "${bulkPassword.trim()}" for all ${members.length} members?`)) return
+                  resetAllPasswords(bulkPassword.trim())
+                  setBulkPasswordSaved(true)
+                  setBulkPassword('')
+                  setTimeout(() => setBulkPasswordSaved(false), 2000)
+                }}
+                disabled={!bulkPassword.trim()}
+                className="text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                style={{ backgroundColor: brandColor }}
+              >
+                {bulkPasswordSaved ? 'Done!' : 'Reset all'}
+              </button>
+            </div>
+          </div>
           <p className="text-xs text-slate-400 mt-4">
             Members can edit: email, phone, LinkedIn, major/minor, high school, and privacy settings.
             Admins always have full edit access.
@@ -1411,6 +1453,48 @@ export default function AdminPanel() {
       <BottomNav />
 
       {showImport && <ImportModal onClose={() => setShowImport(false)} />}
+
+      {passwordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setPasswordModal(null)}>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 z-10" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPasswordModal(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+            <h3 className="font-bold text-slate-900 mb-0.5">Set password</h3>
+            <p className="text-sm text-slate-500 mb-5">{passwordModal.first_name} {passwordModal.last_name}</p>
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                type="text"
+                placeholder="New password"
+                value={passwordModalValue}
+                onChange={e => { setPasswordModalValue(e.target.value); setPasswordModalSaved(false) }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && passwordModalValue.trim()) {
+                    updateMember(passwordModal.id, { password: passwordModalValue.trim() })
+                    setPasswordModalSaved(true)
+                    setTimeout(() => setPasswordModal(null), 800)
+                  }
+                }}
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              />
+              <button
+                onClick={() => {
+                  if (!passwordModalValue.trim()) return
+                  updateMember(passwordModal.id, { password: passwordModalValue.trim() })
+                  setPasswordModalSaved(true)
+                  setTimeout(() => setPasswordModal(null), 800)
+                }}
+                disabled={!passwordModalValue.trim()}
+                className="text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                style={{ backgroundColor: brandColor }}
+              >
+                {passwordModalSaved ? 'Saved!' : 'Save'}
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-3">Current password: <span className="font-mono">{passwordModal.password || 'password'}</span></p>
+          </div>
+        </div>
+      )}
 
       {emailAnn && (
         <EmailModal

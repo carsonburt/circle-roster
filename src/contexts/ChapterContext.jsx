@@ -77,6 +77,10 @@ export function ChapterProvider({ children }) {
     setPendingEdits(prev => prev.filter(e => e.id !== editId))
   }
 
+  function resetAllPasswords(password) {
+    setMembers(prev => prev.map(m => ({ ...m, password })))
+  }
+
   function updateChapter(updates) {
     setChapter(prev => ({ ...prev, ...updates }))
   }
@@ -229,7 +233,7 @@ export function ChapterProvider({ children }) {
       chapter, members, events, announcements, duesTerms, meetings, polls,
       role, memberId, terminology, loading,
       login, logout,
-      pendingEdits, setMemberId, submitProfileEdit, approveEdit, rejectEdit,
+      pendingEdits, setMemberId, submitProfileEdit, approveEdit, rejectEdit, resetAllPasswords,
       updateChapter, addMember, updateMember, deleteMember,
       addEvent, updateEvent, deleteEvent, toggleRsvp,
       addAnnouncement, deleteAnnouncement, pinAnnouncement,

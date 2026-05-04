@@ -7,10 +7,34 @@ export default function Login() {
   const { login, members, setMemberId } = useChapter()
   const [step, setStep] = useState('choose')
   const [search, setSearch] = useState('')
+  const [selectedMember, setSelectedMember] = useState(null)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const filtered = (members || []).filter(m =>
     `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  function handleMemberSelect(m) {
+    setSelectedMember(m)
+    setPassword('')
+    setPasswordError(false)
+    setStep('password')
+  }
+
+  function handlePasswordSubmit(e) {
+    e.preventDefault()
+    const correct = selectedMember.password || 'password'
+    if (password === correct) {
+      setMemberId(selectedMember.id)
+      login('member')
+      navigate('/directory')
+    } else {
+      setPasswordError(true)
+      setPassword('')
+    }
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -74,7 +98,7 @@ export default function Login() {
                   onClick={() => setStep('pick')}
                   className="w-full bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-xl font-semibold border border-slate-200 transition-colors"
                 >
-                  Enter as Member (Demo)
+                  Enter as Member
                 </button>
               </div>
               <p className="text-center text-xs text-slate-400 mt-8">
@@ -92,7 +116,7 @@ export default function Login() {
                 ← Back
               </button>
               <h2 className="text-xl font-bold text-slate-900 mb-1">Find your profile</h2>
-              <p className="text-slate-500 text-sm mb-4">Select your name from the roster to continue as a member.</p>
+              <p className="text-slate-500 text-sm mb-4">Select your name from the roster to continue.</p>
               <input
                 type="text"
                 autoFocus
@@ -107,11 +131,7 @@ export default function Login() {
                 ) : filtered.map(m => (
                   <button
                     key={m.id}
-                    onClick={() => {
-                      setMemberId(m.id)
-                      login('member')
-                      navigate('/directory')
-                    }}
+                    onClick={() => handleMemberSelect(m)}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
                   >
                     <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -129,6 +149,61 @@ export default function Login() {
                   </button>
                 ))}
               </div>
+            </>
+          )}
+
+          {step === 'password' && selectedMember && (
+            <>
+              <button
+                onClick={() => { setStep('pick'); setPassword(''); setPasswordError(false) }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-5 inline-flex items-center gap-1 transition-colors"
+              >
+                ← Back
+              </button>
+              <div className="flex items-center gap-3 mb-6 bg-white border border-slate-200 rounded-xl px-4 py-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {selectedMember.first_name[0]}{selectedMember.last_name[0]}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm">{selectedMember.first_name} {selectedMember.last_name}</p>
+                  <p className="text-xs text-slate-400 truncate">
+                    {[selectedMember.pledge_class, selectedMember.class_year ? `Class of ${selectedMember.class_year}` : ''].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+              </div>
+              <form onSubmit={handlePasswordSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      autoFocus
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setPasswordError(false) }}
+                      className={`w-full border rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 ${
+                        passwordError ? 'border-red-300 focus:ring-red-400' : 'border-slate-200'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-medium"
+                    >
+                      {showPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  {passwordError && (
+                    <p className="text-xs text-red-500 mt-1.5 font-medium">Incorrect password. Try again.</p>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors shadow-sm"
+                >
+                  Sign in
+                </button>
+              </form>
             </>
           )}
         </div>
