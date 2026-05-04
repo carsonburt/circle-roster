@@ -23,7 +23,7 @@ export default function Navbar() {
           <div className="flex items-center gap-6">
             <Link
               to="/directory"
-              className="font-bold text-lg tracking-tight flex items-center gap-2.5 flex-shrink-0"
+              className="font-bold text-lg tracking-tight flex items-center gap-2.5 min-w-0"
               style={{ color: brandColor }}
             >
               {chapter?.logo_url && (
@@ -33,7 +33,7 @@ export default function Navbar() {
                   className="w-9 h-9 object-contain flex-shrink-0"
                 />
               )}
-              {chapter?.name || 'Circle Roster'}
+              <span className="truncate">{chapter?.name || 'Circle Roster'}</span>
             </Link>
             <div className="hidden sm:flex items-center gap-0.5">
               {links.map(link => (

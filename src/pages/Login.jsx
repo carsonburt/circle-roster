@@ -44,7 +44,7 @@ export default function Login() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center bg-slate-50 px-6">
+      <div className="flex-1 flex items-center justify-center bg-slate-50 px-4 sm:px-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex flex-col items-center mb-8 gap-2">
             <img src="/logo.png" alt="Circle Roster" className="w-16 h-16 object-contain" />

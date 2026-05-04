@@ -59,17 +59,17 @@ export default function Directory() {
             <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">{chapter.organization}</p>
           )}
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">{chapter?.name}</h1>
-          <div className="flex gap-4 sm:gap-8">
-            <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold tabular-nums">{counts.active}</div>
+          <div className="flex gap-3 sm:gap-8">
+            <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 backdrop-blur-sm">
+              <div className="text-xl sm:text-2xl font-bold tabular-nums">{counts.active}</div>
               <div className="text-white/70 text-xs font-medium mt-0.5">Active</div>
             </div>
-            <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold tabular-nums">{counts.alumni}</div>
+            <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 backdrop-blur-sm">
+              <div className="text-xl sm:text-2xl font-bold tabular-nums">{counts.alumni}</div>
               <div className="text-white/70 text-xs font-medium mt-0.5">Alumni</div>
             </div>
-            <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold tabular-nums">{members.length}</div>
+            <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 backdrop-blur-sm">
+              <div className="text-xl sm:text-2xl font-bold tabular-nums">{members.length}</div>
               <div className="text-white/70 text-xs font-medium mt-0.5">Total</div>
             </div>
           </div>
@@ -105,9 +105,9 @@ export default function Directory() {
             onChange={e => setSearch(e.target.value)}
             className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
           />
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Status</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide flex-shrink-0">Status</span>
               {['all', 'active', 'alumni', 'inactive'].map(s => (
                 <button
                   key={s}
@@ -124,8 +124,8 @@ export default function Directory() {
             </div>
 
             {years.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Class Year</span>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                <span className="text-xs text-slate-400 font-medium uppercase tracking-wide flex-shrink-0">Class Year</span>
                 <button
                   onClick={() => setYearFilter('all')}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${

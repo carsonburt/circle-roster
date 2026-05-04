@@ -96,18 +96,18 @@ export default function LandingPage() {
 
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section className="text-white" style={{ background: 'linear-gradient(135deg, #0F1F6B 0%, #0a1445 60%, #0d1a3a 100%)' }}>
-        <div className="max-w-6xl mx-auto px-4 py-20 lg:py-28">
+        <div className="max-w-6xl mx-auto px-4 py-14 sm:py-20 lg:py-28">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             {/* Text */}
             <div className="flex-1">
               <div className="inline-flex items-center gap-2 bg-white/10 text-blue-200 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide">
                 Built for Greek chapters, clubs & organizations
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4">
                 Build Your Circle.
               </h1>
-              <p className="text-xl text-blue-200 font-medium mb-4">Everything your chapter needs, in one place.</p>
-              <p className="text-lg text-slate-300 mb-8 max-w-lg leading-relaxed">
+              <p className="text-lg sm:text-xl text-blue-200 font-medium mb-4">Everything your chapter needs, in one place.</p>
+              <p className="text-base sm:text-lg text-slate-300 mb-8 max-w-lg leading-relaxed">
                 Member directory, Big/Little family tree, events, dues tracking, and announcements —
                 organized, mobile-friendly, and ready in minutes.
               </p>
@@ -356,10 +356,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Basic */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-8">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-8">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Basic</p>
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-5xl font-bold text-slate-900">$19.99</span>
+                <span className="text-4xl sm:text-5xl font-bold text-slate-900">$19.99</span>
                 <span className="text-slate-400 mb-2 text-lg">/mo</span>
               </div>
               <p className="text-sm text-slate-500 mb-7">Up to 50 members · active & alumni combined</p>
@@ -388,13 +388,13 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="text-white rounded-2xl p-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F1F6B 0%, #1D5FE8 100%)' }}>
+            <div className="text-white rounded-2xl p-5 sm:p-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F1F6B 0%, #1D5FE8 100%)' }}>
               <div className="absolute top-5 right-5 bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full tracking-wide">
                 Most popular
               </div>
               <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-3">Pro</p>
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-5xl font-bold">$34.99</span>
+                <span className="text-4xl sm:text-5xl font-bold">$34.99</span>
                 <span className="text-blue-300 mb-2 text-lg">/mo</span>
               </div>
               <p className="text-sm text-blue-200 mb-7">Unlimited members · no caps, ever</p>
