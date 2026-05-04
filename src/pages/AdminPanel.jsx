@@ -23,6 +23,7 @@ export default function AdminPanel() {
     toggleDuesForTerm, setAllDuesForTerm, updateTermLabel, finalizeTerm,
     addMeeting, deleteMeeting, toggleAttendee, setMeetingAttendees,
     addPoll, deletePoll, closePoll,
+    pendingEdits, approveEdit, rejectEdit,
   } = useChapter()
 
   // Active tab
@@ -252,6 +253,7 @@ export default function AdminPanel() {
 
   const TABS = [
     { key: 'members',    label: 'Members' },
+    { key: 'approvals',  label: 'Approvals', count: pendingEdits.length },
     { key: 'attendance', label: 'Attendance' },
     { key: 'dues',       label: 'Dues' },
     { key: 'polls',      label: 'Polls' },
@@ -281,6 +283,11 @@ export default function AdminPanel() {
                 style={tab === t.key ? { color: brandColor, borderColor: brandColor } : {}}
               >
                 {t.label}
+                {t.count > 0 && (
+                  <span className="ml-1.5 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                    {t.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -487,6 +494,80 @@ export default function AdminPanel() {
             ))}
             {members.length === 0 && <p className="text-slate-400 text-sm">No {t.members.toLowerCase()} yet.</p>}
           </div>
+        </section>
+
+        </>}
+
+        {/* ── APPROVALS TAB ───────────────────────────────────────── */}
+        {tab === 'approvals' && <>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Pending Profile Edits</h2>
+          <p className="text-sm text-slate-500 mb-5">
+            Review changes members have submitted. Approve to apply them, or reject to discard.
+          </p>
+          {pendingEdits.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-sm">No pending edits.</div>
+          ) : (
+            <div className="space-y-4">
+              {pendingEdits.map(edit => {
+                const member = members.find(m => m.id === edit.memberId)
+                if (!member) return null
+                const FIELD_LABELS = {
+                  email: 'Email', phone: 'Phone', linkedin_url: 'LinkedIn',
+                  major: 'Major/Minor', high_school: 'High School',
+                  show_email: 'Show email', show_phone: 'Show phone', show_linkedin: 'Show LinkedIn',
+                }
+                const changed = Object.entries(edit.fields).filter(([k, v]) => String(v) !== String(member[k] ?? ''))
+                const when = new Date(edit.requestedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                return (
+                  <div key={edit.id} className="border border-slate-200 rounded-xl p-5">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {member.first_name[0]}{member.last_name[0]}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">{member.first_name} {member.last_name}</p>
+                          <p className="text-xs text-slate-400">Submitted {when}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => approveEdit(edit.id)}
+                          className="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg font-semibold transition-colors"
+                        >Approve</button>
+                        <button
+                          onClick={() => rejectEdit(edit.id)}
+                          className="text-xs bg-red-50 text-red-500 hover:bg-red-100 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                        >Reject</button>
+                      </div>
+                    </div>
+                    {changed.length === 0 ? (
+                      <p className="text-xs text-slate-400">No changes detected.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {changed.map(([field, newVal]) => (
+                          <div key={field} className="flex items-start gap-3 text-xs">
+                            <span className="text-slate-400 w-24 flex-shrink-0 font-medium">{FIELD_LABELS[field] || field}</span>
+                            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                              <span className="text-slate-400 line-through truncate max-w-[120px]">
+                                {typeof member[field] === 'boolean' ? (member[field] ? 'Visible' : 'Hidden') : (member[field] || '—')}
+                              </span>
+                              <span className="text-slate-400">→</span>
+                              <span className="text-slate-800 font-medium truncate max-w-[120px]">
+                                {typeof newVal === 'boolean' ? (newVal ? 'Visible' : 'Hidden') : (newVal || '—')}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         </>}
@@ -1300,6 +1381,28 @@ export default function AdminPanel() {
               {brandingSaved ? 'Saved!' : 'Save branding'}
             </button>
           </form>
+        </section>
+
+        {/* Member portal settings */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Member Portal</h2>
+          <p className="text-sm text-slate-500 mb-5">Control how members can update their own profiles.</p>
+          <div className="flex items-center justify-between gap-4 py-4 border-b border-slate-100">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Require approval for profile edits</p>
+              <p className="text-xs text-slate-400 mt-0.5">When on, member-submitted changes go into a pending queue for you to review. When off, changes apply immediately.</p>
+            </div>
+            <button
+              onClick={() => updateChapter({ member_edits_require_approval: !chapter.member_edits_require_approval })}
+              className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${chapter.member_edits_require_approval ? 'bg-blue-600' : 'bg-slate-300'}`}
+            >
+              <div className={`absolute top-1.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${chapter.member_edits_require_approval ? 'translate-x-7' : 'translate-x-1.5'}`} />
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mt-4">
+            Members can edit: email, phone, LinkedIn, major/minor, high school, and privacy settings.
+            Admins always have full edit access.
+          </p>
         </section>
 
         </>}

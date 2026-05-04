@@ -8,6 +8,7 @@
   custom_mentee: null, custom_mentees: null, custom_cohort: null,
   custom_team: null, custom_tree_title: null,
   primary_color: '#1D5FE8', logo_url: '/logo.png',
+  member_edits_require_approval: true,
 }
 
 export const mockMembers = [

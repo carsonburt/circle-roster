@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useChapter } from '../contexts/ChapterContext'
 import Navbar from '../components/Navbar'
@@ -24,12 +25,48 @@ const STATUS_STYLES = {
 
 export default function MemberProfile() {
   const { id } = useParams()
-  const { chapter, members, role, terminology: t } = useChapter()
+  const { chapter, members, role, memberId, pendingEdits, submitProfileEdit, terminology: t } = useChapter()
 
   const member = members.find(m => m.id === id)
   const mentor = member?.big_id ? members.find(m => m.id === member.big_id) : null
   const mentees = members.filter(m => m.big_id === id)
   const isAdmin = role === 'admin'
+  const isOwnProfile = memberId === id
+  const hasPendingEdit = pendingEdits?.find(e => e.memberId === id)
+
+  const EDITABLE_FIELDS = [
+    { key: 'email',        label: 'Email',         type: 'email' },
+    { key: 'phone',        label: 'Phone',          type: 'tel' },
+    { key: 'linkedin_url', label: 'LinkedIn URL',   type: 'url' },
+    { key: 'major',        label: 'Major / Minor',  type: 'text' },
+    { key: 'high_school',  label: 'High School',    type: 'text' },
+  ]
+
+  const [showEdit, setShowEdit] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [editSaved, setEditSaved] = useState(false)
+
+  function openEdit() {
+    setEditForm({
+      email:        member.email || '',
+      phone:        member.phone || '',
+      linkedin_url: member.linkedin_url || '',
+      major:        member.major || '',
+      high_school:  member.high_school || '',
+      show_email:   member.show_email,
+      show_phone:   member.show_phone,
+      show_linkedin: member.show_linkedin,
+    })
+    setEditSaved(false)
+    setShowEdit(true)
+  }
+
+  function handleEditSubmit(e) {
+    e.preventDefault()
+    submitProfileEdit(id, editForm)
+    setEditSaved(true)
+    setTimeout(() => { setShowEdit(false); setEditSaved(false) }, 1200)
+  }
 
   if (!member) return (
     <div className="min-h-screen bg-slate-50">
@@ -51,6 +88,12 @@ export default function MemberProfile() {
           <Link to="/directory" className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 inline-flex items-center gap-1 transition-colors">
             ← Back to directory
           </Link>
+          {hasPendingEdit && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2.5">
+              <span className="text-amber-500 flex-shrink-0 mt-0.5 text-sm">⏳</span>
+              <p className="text-sm text-amber-800 font-medium">Your profile update is pending admin approval.</p>
+            </div>
+          )}
           <div className="flex items-center gap-6 mt-4">
             <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-sm overflow-hidden`}>
               {member.avatar_url
@@ -75,6 +118,16 @@ export default function MemberProfile() {
                 {member.class_year && <><span className="text-slate-300">&middot;</span><span>Class of {member.class_year}</span></>}
               </div>
             </div>
+            {isOwnProfile && (
+              <button
+                onClick={openEdit}
+                disabled={!!hasPendingEdit}
+                className="ml-auto flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: chapter?.primary_color || '#1D5FE8', borderColor: chapter?.primary_color || '#1D5FE8' }}
+              >
+                {hasPendingEdit ? 'Pending…' : 'Edit profile'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -201,6 +254,59 @@ export default function MemberProfile() {
           </div>
         </div>
       </main>
+      {showEdit && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowEdit(false)}>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="relative bg-white w-full sm:rounded-2xl sm:max-w-md shadow-xl z-10 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-lg">Edit my profile</h3>
+              <button onClick={() => setShowEdit(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              {EDITABLE_FIELDS.map(f => (
+                <div key={f.key}>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">{f.label}</label>
+                  <input
+                    type={f.type}
+                    value={editForm[f.key] || ''}
+                    onChange={e => setEditForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                  />
+                </div>
+              ))}
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-2">Privacy</p>
+                <div className="space-y-2">
+                  {[
+                    { key: 'show_email',    label: 'Show email to other members' },
+                    { key: 'show_phone',    label: 'Show phone to other members' },
+                    { key: 'show_linkedin', label: 'Show LinkedIn to other members' },
+                  ].map(toggle => (
+                    <label key={toggle.key} className="flex items-center gap-3 cursor-pointer">
+                      <div
+                        onClick={() => setEditForm(prev => ({ ...prev, [toggle.key]: !prev[toggle.key] }))}
+                        className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 relative cursor-pointer ${editForm[toggle.key] ? 'bg-blue-600' : 'bg-slate-200'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${editForm[toggle.key] ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </div>
+                      <span className="text-sm text-slate-700">{toggle.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
+              >
+                {editSaved ? (chapter?.member_edits_require_approval ? 'Sent for approval!' : 'Saved!') : 'Save changes'}
+              </button>
+              {chapter?.member_edits_require_approval && !editSaved && (
+                <p className="text-xs text-slate-400 text-center">Changes will be visible after admin approval.</p>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
       <BottomNav />
     </div>
   )

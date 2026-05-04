@@ -19,6 +19,7 @@ export function ChapterProvider({ children }) {
   const [duesTerms, setDuesTerms] = useState(() => load('cr_duesTerms', mockDuesTerms))
   const [meetings, setMeetings] = useState(() => load('cr_meetings', mockMeetings))
   const [polls, setPolls] = useState(() => load('cr_polls', mockPolls))
+  const [pendingEdits, setPendingEdits] = useState(() => load('cr_pendingEdits', []))
 
   useEffect(() => { localStorage.setItem('cr_chapter', JSON.stringify(chapter)) }, [chapter])
   useEffect(() => { localStorage.setItem('cr_members', JSON.stringify(members)) }, [members])
@@ -27,8 +28,9 @@ export function ChapterProvider({ children }) {
   useEffect(() => { localStorage.setItem('cr_duesTerms', JSON.stringify(duesTerms)) }, [duesTerms])
   useEffect(() => { localStorage.setItem('cr_meetings', JSON.stringify(meetings)) }, [meetings])
   useEffect(() => { localStorage.setItem('cr_polls', JSON.stringify(polls)) }, [polls])
+  useEffect(() => { localStorage.setItem('cr_pendingEdits', JSON.stringify(pendingEdits)) }, [pendingEdits])
   const [role, setRole] = useState(() => localStorage.getItem('cr_role') || null)
-  const memberId = null
+  const [memberId, setMemberIdState] = useState(() => localStorage.getItem('cr_memberId') || null)
   const loading = false
 
   function login(newRole) {
@@ -38,7 +40,41 @@ export function ChapterProvider({ children }) {
 
   function logout() {
     localStorage.removeItem('cr_role')
+    localStorage.removeItem('cr_memberId')
     setRole(null)
+    setMemberIdState(null)
+  }
+
+  function setMemberId(id) {
+    if (id) localStorage.setItem('cr_memberId', id)
+    else localStorage.removeItem('cr_memberId')
+    setMemberIdState(id)
+  }
+
+  function submitProfileEdit(mId, fields) {
+    if (!chapter.member_edits_require_approval) {
+      updateMember(mId, fields)
+    } else {
+      setPendingEdits(prev => {
+        const without = prev.filter(e => e.memberId !== mId)
+        return [...without, {
+          id: `pe${Date.now()}`,
+          memberId: mId,
+          fields,
+          requestedAt: new Date().toISOString(),
+        }]
+      })
+    }
+  }
+
+  function approveEdit(editId) {
+    const edit = pendingEdits.find(e => e.id === editId)
+    if (edit) updateMember(edit.memberId, edit.fields)
+    setPendingEdits(prev => prev.filter(e => e.id !== editId))
+  }
+
+  function rejectEdit(editId) {
+    setPendingEdits(prev => prev.filter(e => e.id !== editId))
   }
 
   function updateChapter(updates) {
@@ -193,6 +229,7 @@ export function ChapterProvider({ children }) {
       chapter, members, events, announcements, duesTerms, meetings, polls,
       role, memberId, terminology, loading,
       login, logout,
+      pendingEdits, setMemberId, submitProfileEdit, approveEdit, rejectEdit,
       updateChapter, addMember, updateMember, deleteMember,
       addEvent, updateEvent, deleteEvent, toggleRsvp,
       addAnnouncement, deleteAnnouncement, pinAnnouncement,
