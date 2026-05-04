@@ -12,15 +12,17 @@ export function ChapterProvider({ children }) {
   const [duesTerms, setDuesTerms] = useState(mockDuesTerms)
   const [meetings, setMeetings] = useState(mockMeetings)
   const [polls, setPolls] = useState(mockPolls)
-  const [role, setRole] = useState(null)
+  const [role, setRole] = useState(() => localStorage.getItem('cr_role') || null)
   const memberId = null
   const loading = false
 
   function login(newRole) {
+    localStorage.setItem('cr_role', newRole)
     setRole(newRole)
   }
 
   function logout() {
+    localStorage.removeItem('cr_role')
     setRole(null)
   }
 
