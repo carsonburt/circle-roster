@@ -1,17 +1,32 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { getTerminology } from '../lib/terminology'
 import { mockChapter, mockMembers, mockEvents, mockAnnouncements, mockDuesTerms, mockMeetings, mockPolls } from '../lib/mockData'
+
+function load(key, fallback) {
+  try {
+    const val = localStorage.getItem(key)
+    return val ? JSON.parse(val) : fallback
+  } catch { return fallback }
+}
 
 const ChapterContext = createContext(null)
 
 export function ChapterProvider({ children }) {
-  const [chapter, setChapter] = useState(mockChapter)
-  const [members, setMembers] = useState(mockMembers)
-  const [events, setEvents] = useState(mockEvents)
-  const [announcements, setAnnouncements] = useState(mockAnnouncements)
-  const [duesTerms, setDuesTerms] = useState(mockDuesTerms)
-  const [meetings, setMeetings] = useState(mockMeetings)
-  const [polls, setPolls] = useState(mockPolls)
+  const [chapter, setChapter] = useState(() => load('cr_chapter', mockChapter))
+  const [members, setMembers] = useState(() => load('cr_members', mockMembers))
+  const [events, setEvents] = useState(() => load('cr_events', mockEvents))
+  const [announcements, setAnnouncements] = useState(() => load('cr_announcements', mockAnnouncements))
+  const [duesTerms, setDuesTerms] = useState(() => load('cr_duesTerms', mockDuesTerms))
+  const [meetings, setMeetings] = useState(() => load('cr_meetings', mockMeetings))
+  const [polls, setPolls] = useState(() => load('cr_polls', mockPolls))
+
+  useEffect(() => { localStorage.setItem('cr_chapter', JSON.stringify(chapter)) }, [chapter])
+  useEffect(() => { localStorage.setItem('cr_members', JSON.stringify(members)) }, [members])
+  useEffect(() => { localStorage.setItem('cr_events', JSON.stringify(events)) }, [events])
+  useEffect(() => { localStorage.setItem('cr_announcements', JSON.stringify(announcements)) }, [announcements])
+  useEffect(() => { localStorage.setItem('cr_duesTerms', JSON.stringify(duesTerms)) }, [duesTerms])
+  useEffect(() => { localStorage.setItem('cr_meetings', JSON.stringify(meetings)) }, [meetings])
+  useEffect(() => { localStorage.setItem('cr_polls', JSON.stringify(polls)) }, [polls])
   const [role, setRole] = useState(() => localStorage.getItem('cr_role') || null)
   const memberId = null
   const loading = false
