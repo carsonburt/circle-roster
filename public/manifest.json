@@ -1,0 +1,17 @@
+{
+  "name": "Circle Roster",
+  "short_name": "Circle Roster",
+  "description": "Member directory, events, and management for chapters and clubs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
