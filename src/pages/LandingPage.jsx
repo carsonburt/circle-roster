@@ -155,7 +155,7 @@ export default function LandingPage() {
             <button
               onClick={() => scrollPreview(-1)}
               aria-label="Scroll left"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full shadow-none flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
             >
               ‹
             </button>
@@ -163,7 +163,7 @@ export default function LandingPage() {
             <button
               onClick={() => scrollPreview(1)}
               aria-label="Scroll right"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full shadow-none flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
             >
               ›
             </button>
