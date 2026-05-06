@@ -30,7 +30,8 @@ export default function AdminPanel() {
   } = useChapter()
 
   // Active tab
-  const [tab, setTab] = useState('members')
+  const [tab, setTab] = useState(() => localStorage.getItem('cr_admin_tab') || 'members')
+  function changeTab(key) { localStorage.setItem('cr_admin_tab', key); setTab(key) }
   useEffect(() => {
     if (tab === 'inbox') {
       notifications.filter(n => n.toMemberId === null && !n.read).forEach(n => markNotificationRead(n.id))
@@ -257,7 +258,7 @@ export default function AdminPanel() {
   }
 
   function startEdit(member) {
-    setTab('members')
+    changeTab('members')
     setEditingId(member.id)
     setForm({
       first_name: member.first_name,
@@ -382,7 +383,7 @@ export default function AdminPanel() {
             {TABS.map(t => (
               <button
                 key={t.key}
-                onClick={() => setTab(t.key)}
+                onClick={() => changeTab(t.key)}
                 className={`px-5 py-3.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 ${
                   tab === t.key
                     ? 'border-current text-current'
