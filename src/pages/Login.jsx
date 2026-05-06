@@ -1,24 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useChapter } from '../contexts/ChapterContext'
+import { supabase } from '../lib/supabase'
 
 export default function Login() {
   const navigate = useNavigate()
   const { role, login, members, setMemberId, resetToMockData } = useChapter()
 
-  const [step, setStep] = useState('choose') // 'choose' | 'pick' | 'password'
-  const [search, setSearch] = useState('')
-  const [selectedMember, setSelectedMember] = useState(null)
+  const [step, setStep] = useState('choose') // 'choose' | 'email' | 'pick' | 'password'
+
+  // Shared
   const [password, setPassword] = useState('')
-  const [passwordError, setPasswordError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [pendingNav, setPendingNav] = useState(false)
 
-  // Navigate only after React has committed state updates
+  // Supabase email/password flow
+  const [email, setEmail] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
+
+  // Fallback member-picker flow (no Supabase)
+  const [search, setSearch] = useState('')
+  const [selectedMember, setSelectedMember] = useState(null)
+  const [passwordError, setPasswordError] = useState(false)
+
   useEffect(() => {
-    if (pendingNav && role) {
-      navigate('/directory')
-    }
+    if (pendingNav && role) navigate('/directory')
   }, [pendingNav, role])
 
   const filtered = (members || []).filter(m =>
@@ -29,6 +36,27 @@ export default function Login() {
     resetToMockData()
     login('admin')
     setPendingNav(true)
+  }
+
+  async function handleSupabaseLogin(e) {
+    e.preventDefault()
+    setLoginError('')
+    setLoginLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (error) {
+        setLoginError(error.message)
+      } else {
+        setPendingNav(true)
+      }
+    } catch {
+      setLoginError('An error occurred. Please try again.')
+    } finally {
+      setLoginLoading(false)
+    }
   }
 
   function handleMemberSelect(m) {
@@ -138,10 +166,10 @@ export default function Login() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setStep('pick')}
+                  onClick={() => setStep(supabase ? 'email' : 'pick')}
                   className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 >
-                  Find my profile →
+                  Sign in →
                 </button>
               </div>
 
@@ -154,7 +182,75 @@ export default function Login() {
             </>
           )}
 
-          {/* ── Step: pick member ──────────────────────────── */}
+          {/* ── Step: email+password (Supabase) ────────────── */}
+          {step === 'email' && (
+            <>
+              <button
+                onClick={() => { setStep('choose'); setEmail(''); setPassword(''); setLoginError('') }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium mb-5 inline-flex items-center gap-1 transition-colors"
+              >
+                ← Back
+              </button>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">Sign in to your chapter</h2>
+              <p className="text-slate-500 text-sm mb-5">Enter the email and password for your member account.</p>
+
+              <form onSubmit={handleSupabaseLogin} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    autoFocus
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setLoginError('') }}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setLoginError('') }}
+                      className={`w-full border rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 ${
+                        loginError ? 'border-red-300 focus:ring-red-400' : 'border-slate-200'
+                      }`}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-medium"
+                    >
+                      {showPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  {loginError && (
+                    <p className="text-xs text-red-500 mt-1.5 font-medium">{loginError}</p>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={loginLoading || !email.trim() || !password}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors shadow-sm"
+                >
+                  {loginLoading ? 'Signing in…' : 'Sign in'}
+                </button>
+              </form>
+
+              <p className="text-center text-sm text-slate-500 mt-5">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
+                  Get started free →
+                </Link>
+              </p>
+            </>
+          )}
+
+          {/* ── Step: pick member (fallback — no Supabase) ─── */}
           {step === 'pick' && (
             <>
               <button
@@ -200,7 +296,7 @@ export default function Login() {
             </>
           )}
 
-          {/* ── Step: password ─────────────────────────────── */}
+          {/* ── Step: password (fallback — no Supabase) ────── */}
           {step === 'password' && selectedMember && (
             <>
               <button

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useChapter } from '../contexts/ChapterContext'
+import { supabase } from '../lib/supabase'
 import { GROUP_TYPES } from '../lib/terminology'
 
 const PRESET_COLORS = [
@@ -13,9 +14,11 @@ const STEP_LABELS = ['Your group', 'Your account', 'Brand color', "You're ready"
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { resetToFreshChapter, addMember, setMemberId, login } = useChapter()
+  const { resetToFreshChapter, addMember, setMemberId, login, refreshChapter } = useChapter()
 
   const [step, setStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [signupError, setSignupError] = useState('')
 
   // Step 0
   const [groupName, setGroupName] = useState('')
@@ -31,23 +34,84 @@ export default function Signup() {
   // Step 2
   const [color, setColor] = useState('#1D5FE8')
 
-  function handleSetup() {
-    resetToFreshChapter({ name: groupName.trim(), type: groupType, primary_color: color })
-    const adminId = addMember({
-      first_name: firstName.trim(),
-      last_name:  lastName.trim(),
-      email:      email.trim(),
-      password,
-      status:     'active',
-      position:   'Admin',
-      is_admin:   true,
-      pledge_class: '', class_year: null, big_id: null,
-      show_email: true, show_phone: true, show_linkedin: true,
-      avatar_url: null, major: '', high_school: '', linkedin_url: '',
-    })
-    setMemberId(adminId)
-    login('admin')
-    setStep(3)
+  async function handleSetup() {
+    setSubmitting(true)
+    setSignupError('')
+
+    if (!supabase) {
+      // No Supabase configured — demo/localStorage mode
+      resetToFreshChapter({ name: groupName.trim(), type: groupType, primary_color: color })
+      const adminId = addMember({
+        first_name: firstName.trim(), last_name: lastName.trim(),
+        email: email.trim(), password,
+        status: 'active', position: 'Admin', is_admin: true,
+        pledge_class: '', class_year: null, big_id: null,
+        show_email: true, show_phone: true, show_linkedin: true,
+        avatar_url: null, major: '', high_school: '', linkedin_url: '',
+      })
+      setMemberId(adminId)
+      login('admin')
+      setStep(3)
+      setSubmitting(false)
+      return
+    }
+
+    try {
+      // 1. Create Supabase auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      })
+      if (authError) throw authError
+
+      const userId = authData.user.id
+      const chapterId = crypto.randomUUID()
+      const memberId = crypto.randomUUID()
+
+      // 2. Create chapter record
+      const { error: chapterError } = await supabase.from('chapters').insert({
+        id: chapterId,
+        name: groupName.trim(),
+        type: groupType,
+        primary_color: color,
+      })
+      if (chapterError) throw chapterError
+
+      // 3. Create admin member linked to auth user
+      const { error: memberError } = await supabase.from('members').insert({
+        id: memberId,
+        chapter_id: chapterId,
+        user_id: userId,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        is_admin: true,
+        status: 'active',
+        position: 'Admin',
+        show_email: true,
+        show_phone: true,
+        show_linkedin: true,
+      })
+      if (memberError) throw memberError
+
+      // 4. Create initial dues term
+      const { error: dtError } = await supabase.from('dues_terms').insert({
+        id: crypto.randomUUID(),
+        chapter_id: chapterId,
+        label: 'Current Term',
+        finalized: false,
+      })
+      if (dtError) console.warn('dues_terms insert:', dtError.message)
+
+      // 5. Load all data into context (auth listener may not have fired yet)
+      await refreshChapter()
+
+      setStep(3)
+    } catch (err) {
+      setSignupError(err.message || 'Setup failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const progress = step === 3 ? 100 : Math.round((step / 3) * 100)
@@ -280,7 +344,7 @@ export default function Signup() {
               </div>
 
               {/* Custom picker */}
-              <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-3 mb-5 p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <input
                   type="color"
                   value={color}
@@ -293,19 +357,27 @@ export default function Signup() {
                 </div>
               </div>
 
+              {signupError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                  {signupError}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="px-5 py-3 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                  disabled={submitting}
+                  className="px-5 py-3 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-40"
                 >
                   ←
                 </button>
                 <button
                   onClick={handleSetup}
-                  className="flex-1 text-white py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
+                  disabled={submitting}
+                  className="flex-1 text-white py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-60"
                   style={{ backgroundColor: color }}
                 >
-                  Finish setup →
+                  {submitting ? 'Setting up…' : 'Finish setup →'}
                 </button>
               </div>
             </div>
