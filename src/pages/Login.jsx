@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useChapter } from '../contexts/ChapterContext'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login, members, setMemberId, resetToMockData } = useChapter()
+  const { role, login, members, setMemberId, resetToMockData } = useChapter()
 
   const [step, setStep] = useState('choose') // 'choose' | 'pick' | 'password'
   const [search, setSearch] = useState('')
@@ -12,6 +12,14 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingNav, setPendingNav] = useState(false)
+
+  // Navigate only after React has committed state updates
+  useEffect(() => {
+    if (pendingNav && role) {
+      navigate('/directory')
+    }
+  }, [pendingNav, role])
 
   const filtered = (members || []).filter(m =>
     `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
@@ -20,7 +28,7 @@ export default function Login() {
   function handleDemoLogin() {
     resetToMockData()
     login('admin')
-    navigate('/directory')
+    setPendingNav(true)
   }
 
   function handleMemberSelect(m) {
@@ -36,7 +44,7 @@ export default function Login() {
     if (password === correct) {
       setMemberId(selectedMember.id)
       login(selectedMember.is_admin ? 'admin' : 'member')
-      navigate('/directory')
+      setPendingNav(true)
     } else {
       setPasswordError(true)
       setPassword('')
