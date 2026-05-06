@@ -181,8 +181,25 @@ export default function LandingPage() {
                   <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">active</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-500">Fall 2020 · Whitfield Line</p>
-              <p className="text-xs text-slate-400 mt-0.5">Class of 2024</p>
+              <p className="text-xs text-slate-500">Fall 2020 · Class of 2024</p>
+              <div className="mt-3 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-xs w-4 text-center">@</span>
+                  <span className="text-xs text-slate-600 truncate">j.whitfield@email.com</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-xs w-4 text-center">#</span>
+                  <span className="text-xs text-slate-600">(404) 555-0182</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#0A66C2] font-bold text-xs w-4 text-center">in</span>
+                  <span className="text-xs text-blue-600 truncate">linkedin.com/in/jwhitfield</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-xs w-4 text-center">🎓</span>
+                  <span className="text-xs text-slate-600">Finance / Economics</span>
+                </div>
+              </div>
             </div>
 
             {/* Event card */}
