@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import { useChapter } from '../contexts/ChapterContext'
 import { GROUP_TYPES, TERMS } from '../lib/terminology'
