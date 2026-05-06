@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   status: 'active', big_id: '',
   show_phone: true, show_email: true, show_linkedin: true,
   avatar_url: null, position: '', major: '', high_school: '',
+  password: '',
 }
 
 export default function AdminPanel() {
@@ -193,6 +194,7 @@ export default function AdminPanel() {
       position: member.position || '',
       major: member.major || '',
       high_school: member.high_school || '',
+      password: member.password || '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -209,6 +211,7 @@ export default function AdminPanel() {
       class_year: form.class_year ? parseInt(form.class_year) : null,
       big_id: form.big_id || null,
     }
+    if (!payload.password) delete payload.password
     if (editingId) {
       updateMember(editingId, payload)
     } else {
@@ -375,6 +378,17 @@ export default function AdminPanel() {
             ))}
 
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                type="text"
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                placeholder={editingId ? 'Leave blank to keep current' : 'default: password'}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">{t.cohort}</label>
               <input
                 type="text"
@@ -469,7 +483,7 @@ export default function AdminPanel() {
           </div>
           <div className="space-y-0.5">
             {members.map(m => (
-              <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+              <div key={m.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 border-b border-slate-50 last:border-0 gap-1.5">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
                     {m.avatar_url
@@ -490,7 +504,7 @@ export default function AdminPanel() {
                     {m.pledge_class && <span className="ml-2 text-xs text-slate-400 hidden sm:inline">{m.pledge_class}</span>}
                   </div>
                 </div>
-                <div className="flex gap-1.5 flex-shrink-0 ml-2">
+                <div className="flex gap-1.5 flex-shrink-0 ml-11 sm:ml-0 flex-wrap sm:flex-nowrap">
                   <button
                     onClick={() => updateMember(m.id, { is_admin: !m.is_admin })}
                     className={`text-xs px-2 py-1 rounded-lg transition-colors ${
@@ -504,13 +518,6 @@ export default function AdminPanel() {
                   </button>
                   <button onClick={() => handleToggleAlumni(m)} className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors">
                     {m.status === 'alumni' ? 'Active' : 'Alumni'}
-                  </button>
-                  <button
-                    onClick={() => { setPasswordModal(m); setPasswordModalValue(''); setPasswordModalSaved(false) }}
-                    className="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
-                    title="Set password"
-                  >
-                    🔑
                   </button>
                   <button onClick={() => startEdit(m)} className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors">
                     Edit

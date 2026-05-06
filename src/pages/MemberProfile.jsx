@@ -45,11 +45,6 @@ export default function MemberProfile() {
   const [showEdit, setShowEdit] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [editSaved, setEditSaved] = useState(false)
-  const [showPwSection, setShowPwSection] = useState(false)
-  const [currentPw, setCurrentPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [pwError, setPwError] = useState('')
-  const [pwSaved, setPwSaved] = useState(false)
   const [resetRequested, setResetRequested] = useState(false)
 
   function openEdit() {
@@ -62,6 +57,7 @@ export default function MemberProfile() {
       show_email:   member.show_email,
       show_phone:   member.show_phone,
       show_linkedin: member.show_linkedin,
+      password:     member.password || '',
     })
     setEditSaved(false)
     setShowEdit(true)
@@ -69,28 +65,19 @@ export default function MemberProfile() {
 
   function handleEditSubmit(e) {
     e.preventDefault()
-    submitProfileEdit(id, editForm)
+    const { password, ...profileFields } = editForm
+    if (password && password !== (member.password || '')) {
+      updateMember(id, { password })
+      addNotification({
+        toMemberId: id,
+        type: 'password_changed',
+        title: 'Password changed',
+        message: 'Your password has been updated.',
+      })
+    }
+    submitProfileEdit(id, profileFields)
     setEditSaved(true)
     setTimeout(() => { setShowEdit(false); setEditSaved(false) }, 1200)
-  }
-
-  function handlePasswordChange() {
-    const correct = member.password || 'password'
-    if (!currentPw) { setPwError('Enter your current password.'); return }
-    if (!newPw) { setPwError('Enter a new password.'); return }
-    if (currentPw !== correct) { setPwError('Incorrect current password.'); return }
-    updateMember(id, { password: newPw })
-    addNotification({
-      toMemberId: id,
-      type: 'password_changed',
-      title: 'Password changed',
-      message: 'Your password has been updated successfully.',
-    })
-    setCurrentPw('')
-    setNewPw('')
-    setPwError('')
-    setPwSaved(true)
-    setTimeout(() => setPwSaved(false), 2000)
   }
 
   if (!member) return (
@@ -319,6 +306,19 @@ export default function MemberProfile() {
                   ))}
                 </div>
               </div>
+              {/* Password field */}
+              <div className="border-t border-slate-100 pt-4">
+                <label className="block text-xs font-medium text-slate-500 mb-1">Password</label>
+                <input
+                  type="text"
+                  value={editForm.password || ''}
+                  onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Enter new password"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+                />
+                <p className="text-xs text-slate-400 mt-1">Leave blank to keep your current password.</p>
+              </div>
+
               <button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
@@ -326,50 +326,8 @@ export default function MemberProfile() {
                 {editSaved ? (chapter?.member_edits_require_approval ? 'Sent for approval!' : 'Saved!') : 'Save changes'}
               </button>
               {chapter?.member_edits_require_approval && !editSaved && (
-                <p className="text-xs text-slate-400 text-center">Changes will be visible after admin approval.</p>
+                <p className="text-xs text-slate-400 text-center">Profile changes will be visible after admin approval. Password updates apply immediately.</p>
               )}
-
-              {/* Change password */}
-              <div className="border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => { setShowPwSection(v => !v); setPwError(''); setPwSaved(false) }}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition-colors"
-                >
-                  <span className="text-xs">{showPwSection ? '▾' : '▸'}</span> Change password
-                </button>
-                {showPwSection && (
-                  <div className="mt-3 space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">Current password</label>
-                      <input
-                        type="password"
-                        value={currentPw}
-                        onChange={e => { setCurrentPw(e.target.value); setPwError('') }}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">New password</label>
-                      <input
-                        type="password"
-                        value={newPw}
-                        onChange={e => { setNewPw(e.target.value); setPwError('') }}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
-                      />
-                    </div>
-                    {pwError && <p className="text-xs text-red-500 font-medium">{pwError}</p>}
-                    {pwSaved && <p className="text-xs text-emerald-600 font-medium">Password changed!</p>}
-                    <button
-                      type="button"
-                      onClick={handlePasswordChange}
-                      className="text-sm bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                    >
-                      Update password
-                    </button>
-                  </div>
-                )}
-              </div>
 
               {/* Request reset */}
               <div className="text-center pt-1">
