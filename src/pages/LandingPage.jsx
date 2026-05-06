@@ -167,9 +167,6 @@ export default function LandingPage() {
             >
               ›
             </button>
-            {/* Fade edges */}
-            <div className="pointer-events-none absolute left-9 top-0 bottom-2 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10" />
-            <div className="pointer-events-none absolute right-9 top-0 bottom-2 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10" />
           <div ref={previewRef} className="flex gap-4 overflow-x-auto pb-2 snap-x scrollbar-hide px-10">
 
             {/* Member card */}
