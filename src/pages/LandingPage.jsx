@@ -49,23 +49,6 @@ const FEATURES = [
   },
 ]
 
-const STEPS = [
-  {
-    n: '1',
-    title: 'Set up your chapter',
-    desc: 'Add your chapter name, pick your group type, and customize every label to match your terminology.',
-  },
-  {
-    n: '2',
-    title: 'Add your members',
-    desc: 'Import from a spreadsheet, add members manually, or send personalized invite links for self-signup.',
-  },
-  {
-    n: '3',
-    title: 'Stay organized together',
-    desc: 'Members get a searchable directory, family tree, events calendar, and announcements — on any device.',
-  },
-]
 
 export default function LandingPage() {
   const previewRef = useRef(null)
@@ -92,9 +75,15 @@ export default function LandingPage() {
             </Link>
             <Link
               to="/directory"
-              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+              className="text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors hidden sm:block"
             >
               Try demo
+            </Link>
+            <Link
+              to="/signup"
+              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              Get started
             </Link>
           </div>
         </div>
@@ -119,17 +108,17 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  to="/directory"
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
+                  to="/signup"
+                  className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors shadow-lg shadow-blue-900/30"
                 >
-                  Try the demo →
+                  Get started free →
                 </Link>
-                <a
-                  href="#features"
+                <Link
+                  to="/directory"
                   className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
                 >
-                  See features
-                </a>
+                  Explore demo
+                </Link>
               </div>
             </div>
             {/* Logo */}
@@ -362,27 +351,137 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works ──────────────────────────────────────── */}
-      <section className="bg-slate-50 border-y border-slate-100 py-20">
+      <section id="how-it-works" className="bg-slate-50 border-y border-slate-100 py-20">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Up and running in minutes</h2>
             <p className="text-slate-500">No IT setup. No long onboarding. Just your chapter, organized.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {STEPS.map((s, i) => (
-              <div key={s.n} className="relative">
-                {i < STEPS.length - 1 && (
-                  <div className="hidden md:block absolute top-5 left-[calc(50%+20px)] right-[-calc(50%-20px)] h-px bg-slate-200" />
-                )}
-                <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg mb-4 flex-shrink-0 z-10 relative">
-                    {s.n}
-                  </div>
-                  <h3 className="font-semibold text-slate-900 mb-2">{s.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
+
+          <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-8">
+
+            {/* Step 1 */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0">1</div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-sm">Set up your chapter</h3>
+                  <p className="text-xs text-slate-400">Name, type, brand color</p>
                 </div>
               </div>
-            ))}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex-1">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Organization name</p>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700">Alpha Beta Gamma — Gamma Chapter</div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Type of group</p>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 flex items-center justify-between">
+                      <span>Fraternity</span>
+                      <span className="text-slate-300">▾</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1.5">Brand color</p>
+                    <div className="flex gap-1.5">
+                      {['#1D5FE8','#7C3AED','#DC2626','#059669','#D97706'].map((c,i) => (
+                        <div key={c} className={`w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center ${i === 0 ? 'ring-2 ring-offset-1 ring-slate-400' : ''}`} style={{ backgroundColor: c }}>
+                          {i === 0 && <span className="text-white text-xs font-bold">✓</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0">2</div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-sm">Add your members</h3>
+                  <p className="text-xs text-slate-400">Import, invite, or add manually</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex-1">
+                <div className="space-y-2">
+                  {[
+                    ['JW', 'James Whitfield', 'President', true],
+                    ['MT', 'Marcus Thompson', 'VP Finance', true],
+                    ['SA', 'Sofia Alvarez', 'Secretary', false],
+                  ].map(([init, name, role, done]) => (
+                    <div key={name} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">{init}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 truncate">{name}</p>
+                        <p className="text-[10px] text-slate-400">{role}</p>
+                      </div>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                        {done ? 'active' : 'pending'}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="pt-1 flex gap-1.5">
+                    <div className="flex-1 text-center bg-blue-50 text-blue-700 text-xs py-1.5 rounded-lg font-medium">↑ Import Excel</div>
+                    <div className="flex-1 text-center bg-slate-100 text-slate-600 text-xs py-1.5 rounded-lg font-medium">+ Add manually</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0">3</div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-sm">Stay organized together</h3>
+                  <p className="text-xs text-slate-400">Members get instant access</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex-1">
+                <div className="space-y-2">
+                  <div className="bg-blue-600 rounded-xl p-3 text-white">
+                    <p className="text-xs font-semibold mb-1">Alpha Beta Gamma</p>
+                    <div className="flex gap-1.5">
+                      {['Directory','Events','Polls'].map(l => (
+                        <span key={l} className="text-[10px] bg-white/20 px-2 py-0.5 rounded-md">{l}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                      <p className="text-lg font-bold text-slate-900">56</p>
+                      <p className="text-[10px] text-slate-400">Members</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                      <p className="text-lg font-bold text-emerald-600">44</p>
+                      <p className="text-[10px] text-slate-400">Dues paid</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                      <p className="text-lg font-bold text-blue-600">3</p>
+                      <p className="text-[10px] text-slate-400">Events</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                      <p className="text-lg font-bold text-violet-600">2</p>
+                      <p className="text-[10px] text-slate-400">Open polls</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              to="/signup"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-colors shadow-md"
+            >
+              Get started free →
+            </Link>
+            <p className="text-slate-400 text-xs mt-3">No credit card required · Set up in under 5 minutes</p>
           </div>
         </div>
       </section>
@@ -421,10 +520,10 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link
-                to="/directory"
-                className="block w-full text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-5 py-3 rounded-xl font-semibold text-sm transition-colors"
+                to="/signup"
+                className="block w-full text-center bg-blue-600 text-white hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold text-sm transition-colors"
               >
-                Try the demo
+                Get started free
               </Link>
             </div>
 
@@ -455,10 +554,10 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link
-                to="/directory"
+                to="/signup"
                 className="block w-full text-center bg-white text-blue-600 hover:bg-blue-50 px-5 py-3 rounded-xl font-semibold text-sm transition-colors"
               >
-                Try the demo
+                Get started free
               </Link>
             </div>
 
@@ -475,12 +574,20 @@ export default function LandingPage() {
           <p className="text-blue-200 mb-8 text-lg leading-relaxed">
             Join hundreds of chapters already using Circle Roster to stay connected and organized.
           </p>
-          <Link
-            to="/directory"
-            className="inline-block bg-white text-blue-600 hover:bg-blue-50 px-8 py-3.5 rounded-xl font-bold text-sm transition-colors shadow-lg"
-          >
-            Try the demo →
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to="/signup"
+              className="inline-block bg-white text-blue-600 hover:bg-blue-50 px-8 py-3.5 rounded-xl font-bold text-sm transition-colors shadow-lg"
+            >
+              Get started free →
+            </Link>
+            <Link
+              to="/directory"
+              className="inline-block text-white/80 hover:text-white text-sm font-medium transition-colors"
+            >
+              Explore the demo first
+            </Link>
+          </div>
         </div>
       </section>
 

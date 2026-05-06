@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ChapterProvider } from './contexts/ChapterContext'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import Directory from './pages/Directory'
 import MemberProfile from './pages/MemberProfile'
 import FamilyTree from './pages/FamilyTree'
@@ -18,6 +19,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path='/login' element={<Login />} />
+          <Route path='/signup' element={<Signup />} />
           <Route path='/directory' element={<PrivateRoute><Directory /></PrivateRoute>} />
           <Route path='/members/:id' element={<PrivateRoute><MemberProfile /></PrivateRoute>} />
           <Route path='/tree' element={<PrivateRoute><FamilyTree /></PrivateRoute>} />

@@ -170,8 +170,10 @@ export function ChapterProvider({ children }) {
   }
 
   function addMember(member) {
-    const newMember = { ...member, id: Date.now().toString(), chapter_id: chapter.id }
+    const id = Date.now().toString()
+    const newMember = { ...member, id, chapter_id: chapter.id }
     setMembers(prev => [...prev, newMember])
+    return id
   }
 
   function updateMember(id, updates) {
