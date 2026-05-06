@@ -77,6 +77,7 @@ export default function AdminPanel() {
   const [finalizingTerm, setFinalizingTerm] = useState(false)
   const [nextTermLabel, setNextTermLabel] = useState('')
   const [showExportDues, setShowExportDues] = useState(false)
+  const [editingFinalizedTerm, setEditingFinalizedTerm] = useState(false)
   const [exportTermIds, setExportTermIds] = useState(new Set())
 
   // Import
@@ -899,7 +900,7 @@ export default function AdminPanel() {
           {/* Term navigator */}
           <div className="flex items-center gap-2 mb-4">
             <button
-              onClick={() => setDuesTermIdx(i => Math.max(0, i - 1))}
+              onClick={() => { setDuesTermIdx(i => Math.max(0, i - 1)); setEditingFinalizedTerm(false) }}
               disabled={safeTermIdx === 0}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm font-medium flex-shrink-0"
             >←</button>
@@ -914,7 +915,7 @@ export default function AdminPanel() {
               />
             )}
             <button
-              onClick={() => setDuesTermIdx(i => Math.min(duesTerms.length - 1, i + 1))}
+              onClick={() => { setDuesTermIdx(i => Math.min(duesTerms.length - 1, i + 1)); setEditingFinalizedTerm(false) }}
               disabled={safeTermIdx === duesTerms.length - 1}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm font-medium flex-shrink-0"
             >→</button>
@@ -923,6 +924,12 @@ export default function AdminPanel() {
             }`}>
               {viewingTerm.finalized ? 'Finalized' : 'Current'}
             </span>
+            {viewingTerm.finalized && !editingFinalizedTerm && (
+              <button
+                onClick={() => setEditingFinalizedTerm(true)}
+                className="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2.5 py-1 rounded-lg font-medium transition-colors flex-shrink-0"
+              >Edit</button>
+            )}
           </div>
 
           {/* Action row — current term only */}
@@ -975,6 +982,34 @@ export default function AdminPanel() {
             </div>
           )}
 
+          {/* Action row — editing a finalized term */}
+          {viewingTerm.finalized && editingFinalizedTerm && (
+            <div className="flex items-center gap-2 mb-5 flex-wrap bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              <span className="text-xs text-amber-700 font-medium">Editing finalized term</span>
+              <button
+                onClick={() => {
+                  const next = {}
+                  termActiveMembers.forEach(m => { next[m.id] = true })
+                  setAllDuesForTerm(viewingTerm.id, { ...viewingPayments, ...next })
+                }}
+                className="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg font-medium transition-colors"
+              >Mark all paid</button>
+              <button
+                onClick={() => {
+                  const next = {}
+                  termActiveMembers.forEach(m => { next[m.id] = false })
+                  setAllDuesForTerm(viewingTerm.id, { ...viewingPayments, ...next })
+                }}
+                className="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2.5 py-1 rounded-lg font-medium transition-colors"
+              >Clear all</button>
+              <div className="flex-1" />
+              <button
+                onClick={() => setEditingFinalizedTerm(false)}
+                className="text-xs bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-lg font-medium transition-colors"
+              >Done editing</button>
+            </div>
+          )}
+
           {/* Progress bar */}
           <div className="mb-5">
             <div className="flex items-center justify-between text-sm mb-2">
@@ -1003,7 +1038,7 @@ export default function AdminPanel() {
                   <span className="text-sm text-slate-800 truncate">{m.first_name} {m.last_name}</span>
                   {m.pledge_class && <span className="text-xs text-slate-400 hidden sm:block">{m.pledge_class}</span>}
                 </div>
-                {viewingTerm.finalized ? (
+                {viewingTerm.finalized && !editingFinalizedTerm ? (
                   <span className={`text-xs px-3 py-1 rounded-lg font-medium flex-shrink-0 ml-2 ${
                     viewingPayments[m.id] ? 'bg-emerald-100 text-emerald-700' : 'bg-red-50 text-red-500'
                   }`}>
