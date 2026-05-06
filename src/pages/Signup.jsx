@@ -13,7 +13,7 @@ const STEP_LABELS = ['Your group', 'Your account', 'Brand color', "You're ready"
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { updateChapter, addMember, setMemberId, login } = useChapter()
+  const { resetToFreshChapter, addMember, setMemberId, login } = useChapter()
 
   const [step, setStep] = useState(0)
 
@@ -32,7 +32,7 @@ export default function Signup() {
   const [color, setColor] = useState('#1D5FE8')
 
   function handleSetup() {
-    updateChapter({ name: groupName.trim(), type: groupType, primary_color: color })
+    resetToFreshChapter({ name: groupName.trim(), type: groupType, primary_color: color })
     const adminId = addMember({
       first_name: firstName.trim(),
       last_name:  lastName.trim(),

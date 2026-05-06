@@ -303,6 +303,21 @@ export function ChapterProvider({ children }) {
     ))
   }
 
+  function resetToFreshChapter(chapterUpdates) {
+    const freshChapter = { ...chapter, ...chapterUpdates }
+    setChapter(freshChapter)
+    setMembers([])
+    setEvents([])
+    setAnnouncements([])
+    setDuesTerms([{ id: `dt${Date.now()}`, label: 'Current Term', finalized: false, payments: {} }])
+    setMeetings([])
+    setPolls([])
+    setPendingEdits([])
+    setNotifications([])
+    setPointCategories([])
+    setPointLedger([])
+  }
+
   const terminology = getTerminology(chapter.type, {
     member:    chapter.custom_member,
     members:   chapter.custom_members,
@@ -329,6 +344,7 @@ export function ChapterProvider({ children }) {
       addPoll, deletePoll, closePoll, castVote,
       pointCategories, pointLedger,
       addPointCategory, deletePointCategory, awardPoints, deletePointEntry, resetPointLedger,
+      resetToFreshChapter,
       refreshChapter: () => {},
     }}>
       {children}
