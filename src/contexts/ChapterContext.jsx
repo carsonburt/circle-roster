@@ -157,6 +157,10 @@ export function ChapterProvider({ children }) {
     setPointLedger(prev => prev.filter(e => e.id !== id))
   }
 
+  function resetPointLedger() {
+    setPointLedger([])
+  }
+
   function resetAllPasswords(password) {
     setMembers(prev => prev.map(m => ({ ...m, password })))
   }
@@ -322,7 +326,7 @@ export function ChapterProvider({ children }) {
       addMeeting, deleteMeeting, toggleAttendee, setMeetingAttendees,
       addPoll, deletePoll, closePoll, castVote,
       pointCategories, pointLedger,
-      addPointCategory, deletePointCategory, awardPoints, deletePointEntry,
+      addPointCategory, deletePointCategory, awardPoints, deletePointEntry, resetPointLedger,
       refreshChapter: () => {},
     }}>
       {children}

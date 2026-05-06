@@ -26,7 +26,7 @@ export default function AdminPanel() {
     addPoll, deletePoll, closePoll,
     pendingEdits, approveEdit, rejectEdit, resetAllPasswords,
     notifications, addNotification, markNotificationRead, deleteNotification,
-    pointCategories, pointLedger, addPointCategory, deletePointCategory, awardPoints: awardPointsFn, deletePointEntry,
+    pointCategories, pointLedger, addPointCategory, deletePointCategory, awardPoints: awardPointsFn, deletePointEntry, resetPointLedger,
   } = useChapter()
 
   // Active tab
@@ -173,6 +173,78 @@ export default function AdminPanel() {
     XLSX.utils.book_append_sheet(wb, ws, 'Dues')
     XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-dues.xlsx`)
     setShowExportDues(false)
+  }
+
+  function handleExportPoints() {
+    const threshold = chapter.good_standing_min_points || 0
+    const rows = members
+      .filter(m => m.status === 'active')
+      .map(m => {
+        const total = pointLedger.filter(e => e.memberId === m.id).reduce((sum, e) => sum + e.points, 0)
+        const catTotals = pointCategories.map(c =>
+          pointLedger.filter(e => e.memberId === m.id && e.categoryId === c.id).reduce((sum, e) => sum + e.points, 0)
+        )
+        return { m, total, catTotals }
+      })
+      .sort((a, b) => b.total - a.total)
+    const headers = ['Rank', 'Name', 'Pledge Class', 'Total Points',
+      ...(threshold > 0 ? ['Good Standing'] : []),
+      ...pointCategories.map(c => c.name),
+    ]
+    const data = rows.map(({ m, total, catTotals }, idx) => [
+      idx + 1,
+      `${m.first_name} ${m.last_name}`,
+      m.pledge_class || '',
+      total,
+      ...(threshold > 0 ? [total >= threshold ? 'Yes' : 'No'] : []),
+      ...catTotals,
+    ])
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
+    ws['!cols'] = headers.map((_, i) => ({ wch: i === 1 ? 24 : 14 }))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Points')
+    XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-points.xlsx`)
+  }
+
+  function exportMeetingAttendance(meeting) {
+    const d = new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const headers = ['Name', 'Status', 'Pledge Class', 'Attendance']
+    const rows = activeMembers.map(m => [
+      `${m.first_name} ${m.last_name}`,
+      m.status,
+      m.pledge_class || '',
+      meeting.attendee_ids.includes(m.id) ? 'Present' : 'Absent',
+    ])
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    ws['!cols'] = [{ wch: 24 }, { wch: 10 }, { wch: 14 }, { wch: 10 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance')
+    XLSX.writeFile(wb, `${meeting.title.replace(/\s+/g, '-')}-${meeting.date}.xlsx`)
+  }
+
+  function exportAttendanceSummary(filteredMeetings) {
+    const headers = ['Name', 'Status', 'Pledge Class',
+      ...filteredMeetings.map(m => `${m.title} (${m.date})`),
+      'Total', '% Attended',
+    ]
+    const rows = activeMembers.map(m => {
+      const attended = filteredMeetings.filter(mtg => mtg.attendee_ids.includes(m.id)).length
+      const total = filteredMeetings.length
+      const pct = total ? Math.round((attended / total) * 100) : 0
+      return [
+        `${m.first_name} ${m.last_name}`,
+        m.status,
+        m.pledge_class || '',
+        ...filteredMeetings.map(mtg => mtg.attendee_ids.includes(m.id) ? 'Present' : 'Absent'),
+        `${attended}/${total}`,
+        `${pct}%`,
+      ]
+    })
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    ws['!cols'] = headers.map((h, i) => ({ wch: i === 0 ? 24 : i < 3 ? 14 : Math.max(h.length + 2, 12) }))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Summary')
+    XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-attendance-summary.xlsx`)
   }
 
   // ── Member form ───────────────────────────────────────────────
@@ -761,7 +833,7 @@ export default function AdminPanel() {
                           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                             {attended} of {total} active members present
                           </p>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => setMeetingAttendees(meeting.id, activeMembers.map(m => m.id))}
                               className="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg font-medium transition-colors"
@@ -773,6 +845,12 @@ export default function AdminPanel() {
                               className="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2.5 py-1 rounded-lg font-medium transition-colors"
                             >
                               Clear
+                            </button>
+                            <button
+                              onClick={() => exportMeetingAttendance(meeting)}
+                              className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-2.5 py-1 rounded-lg font-medium transition-colors"
+                            >
+                              ↓ Export
                             </button>
                           </div>
                         </div>
@@ -850,6 +928,11 @@ export default function AdminPanel() {
                       Clear
                     </button>
                   )}
+                  <button
+                    onClick={() => exportAttendanceSummary(filteredMeetings)}
+                    disabled={filteredMeetings.length === 0}
+                    className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-40"
+                  >↓ Export Excel</button>
                 </div>
               </div>
               {filteredMeetings.length === 0 ? (
@@ -1229,7 +1312,13 @@ export default function AdminPanel() {
 
         {/* Leaderboard */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-base font-bold text-slate-900 mb-4">Leaderboard <span className="text-slate-400 font-normal text-sm">— active members</span></h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900">Leaderboard <span className="text-slate-400 font-normal text-sm">— active members</span></h2>
+            <button
+              onClick={handleExportPoints}
+              className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-colors flex-shrink-0"
+            >↓ Export Excel</button>
+          </div>
           <div className="space-y-0.5 max-h-[480px] overflow-y-auto">
             {members
               .filter(m => m.status === 'active')
@@ -1333,6 +1422,16 @@ export default function AdminPanel() {
             </div>
           </section>
         )}
+
+        {/* Reset all points */}
+        <section className="bg-white rounded-2xl shadow-sm border border-red-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Reset All Points</h2>
+          <p className="text-sm text-slate-500 mb-4">Permanently clear every point entry for all members. This cannot be undone.</p>
+          <button
+            onClick={() => { if (confirm('Clear all point entries for every member? This cannot be undone.')) resetPointLedger() }}
+            className="text-xs bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-xl font-semibold transition-colors"
+          >Reset all points</button>
+        </section>
 
         </>}
 

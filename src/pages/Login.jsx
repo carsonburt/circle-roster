@@ -28,7 +28,7 @@ export default function Login() {
     const correct = selectedMember.password || 'password'
     if (password === correct) {
       setMemberId(selectedMember.id)
-      login('member')
+      login(selectedMember.is_admin ? 'admin' : 'member')
       navigate('/directory')
     } else {
       setPasswordError(true)
