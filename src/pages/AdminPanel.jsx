@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useChapter } from '../contexts/ChapterContext'
 import { GROUP_TYPES, TERMS } from '../lib/terminology'
@@ -26,6 +26,7 @@ export default function AdminPanel() {
     addPoll, deletePoll, closePoll,
     pendingEdits, approveEdit, rejectEdit, resetAllPasswords,
     notifications, addNotification, markNotificationRead, deleteNotification,
+    pointCategories, pointLedger, addPointCategory, deletePointCategory, awardPoints: awardPointsFn, deletePointEntry,
   } = useChapter()
 
   // Active tab
@@ -79,6 +80,15 @@ export default function AdminPanel() {
   const [nextTermLabel, setNextTermLabel] = useState('')
   const [showExportDues, setShowExportDues] = useState(false)
   const [editingFinalizedTerm, setEditingFinalizedTerm] = useState(false)
+  // Points
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatPoints, setNewCatPoints] = useState('')
+  const [awardMember, setAwardMember] = useState('')
+  const [awardCategory, setAwardCategory] = useState('')
+  const [awardPts, setAwardPts] = useState('')
+  const [awardNote, setAwardNote] = useState('')
+  const [awardDone, setAwardDone] = useState(false)
+  const [gsThreshold, setGsThreshold] = useState(String(chapter.good_standing_min_points || 0))
   const [exportTermIds, setExportTermIds] = useState(new Set())
 
   // Import
@@ -277,6 +287,7 @@ export default function AdminPanel() {
     { key: 'inbox',      label: 'Inbox',     count: adminUnread },
     { key: 'attendance', label: 'Attendance' },
     { key: 'dues',       label: 'Dues' },
+    { key: 'points',     label: 'Points' },
     { key: 'polls',      label: 'Polls' },
     { key: 'content',    label: 'Content' },
     { key: 'settings',   label: 'Settings' },
@@ -1123,6 +1134,208 @@ export default function AdminPanel() {
 
         </>}
 
+        {/* ── POINTS TAB ──────────────────────────────────────────── */}
+        {tab === 'points' && <>
+
+        {/* Good Standing threshold */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Good Standing</h2>
+          <p className="text-sm text-slate-500 mb-4">Minimum points a member needs to be considered in good standing. Set to 0 to disable the indicator.</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              type="number"
+              min="0"
+              value={gsThreshold}
+              onChange={e => setGsThreshold(e.target.value)}
+              className="w-28 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+            />
+            <span className="text-sm text-slate-500">pts minimum</span>
+            <button
+              onClick={() => updateChapter({ good_standing_min_points: Number(gsThreshold) })}
+              className="text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: brandColor }}
+            >Save</button>
+          </div>
+        </section>
+
+        {/* Award Points */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4">Award Points</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Member</label>
+              <select
+                value={awardMember}
+                onChange={e => setAwardMember(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              >
+                <option value="">Select member…</option>
+                {members.filter(m => m.status === 'active').map(m => (
+                  <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+              <select
+                value={awardCategory}
+                onChange={e => {
+                  setAwardCategory(e.target.value)
+                  const cat = pointCategories.find(c => c.id === e.target.value)
+                  if (cat) setAwardPts(String(cat.points))
+                }}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              >
+                <option value="">Select category…</option>
+                {pointCategories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.points} pts)</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Points</label>
+              <input
+                type="number"
+                value={awardPts}
+                onChange={e => setAwardPts(e.target.value)}
+                placeholder="0"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Note (optional)</label>
+              <input
+                type="text"
+                value={awardNote}
+                onChange={e => setAwardNote(e.target.value)}
+                placeholder="e.g. Spring cleanup event"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+              />
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (!awardMember || !awardCategory || !awardPts) return
+              awardPointsFn({ memberId: awardMember, categoryId: awardCategory, points: Number(awardPts), note: awardNote })
+              setAwardMember(''); setAwardCategory(''); setAwardPts(''); setAwardNote('')
+              setAwardDone(true)
+              setTimeout(() => setAwardDone(false), 2000)
+            }}
+            disabled={!awardMember || !awardCategory || !awardPts}
+            className="mt-4 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: brandColor }}
+          >{awardDone ? 'Awarded! ✓' : 'Award Points'}</button>
+        </section>
+
+        {/* Leaderboard */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4">Leaderboard <span className="text-slate-400 font-normal text-sm">— active members</span></h2>
+          <div className="space-y-0.5 max-h-[480px] overflow-y-auto">
+            {members
+              .filter(m => m.status === 'active')
+              .map(m => ({ ...m, totalPoints: pointLedger.filter(e => e.memberId === m.id).reduce((sum, e) => sum + e.points, 0) }))
+              .sort((a, b) => b.totalPoints - a.totalPoints)
+              .map((m, idx) => {
+                const threshold = chapter.good_standing_min_points || 0
+                const standing = threshold === 0 || m.totalPoints >= threshold
+                return (
+                  <div key={m.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs text-slate-400 w-5 text-right flex-shrink-0 tabular-nums">{idx + 1}</span>
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : `${m.first_name[0]}${m.last_name[0]}`}
+                      </div>
+                      <span className="text-sm text-slate-800 truncate">{m.first_name} {m.last_name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                      {threshold > 0 && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full hidden sm:block ${standing ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {standing ? '✓ Good Standing' : '⚠ Below Threshold'}
+                        </span>
+                      )}
+                      <span className="text-sm font-bold text-slate-700 w-14 text-right tabular-nums">{m.totalPoints} pts</span>
+                    </div>
+                  </div>
+                )
+              })
+            }
+          </div>
+        </section>
+
+        {/* Point Categories */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4">Point Categories</h2>
+          <div className="space-y-0.5 mb-4">
+            {pointCategories.map(c => (
+              <div key={c.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                <span className="text-sm text-slate-800">{c.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-slate-500 tabular-nums">{c.points} pts</span>
+                  <button onClick={() => deletePointCategory(c.id)} className="text-slate-300 hover:text-red-500 text-xl leading-none transition-colors">×</button>
+                </div>
+              </div>
+            ))}
+            {pointCategories.length === 0 && <p className="text-sm text-slate-400 py-2">No categories yet.</p>}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Category name"
+              value={newCatName}
+              onChange={e => setNewCatName(e.target.value)}
+              className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+            />
+            <input
+              type="number"
+              placeholder="Pts"
+              value={newCatPoints}
+              onChange={e => setNewCatPoints(e.target.value)}
+              className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+            />
+            <button
+              onClick={() => {
+                if (!newCatName.trim() || !newCatPoints) return
+                addPointCategory(newCatName.trim(), newCatPoints)
+                setNewCatName(''); setNewCatPoints('')
+              }}
+              disabled={!newCatName.trim() || !newCatPoints}
+              className="text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+              style={{ backgroundColor: brandColor }}
+            >+ Add</button>
+          </div>
+        </section>
+
+        {/* Recent Activity */}
+        {pointLedger.length > 0 && (
+          <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4">Recent Activity</h2>
+            <div className="space-y-0.5 max-h-64 overflow-y-auto">
+              {pointLedger.slice(0, 50).map(entry => {
+                const m = members.find(mb => mb.id === entry.memberId)
+                return (
+                  <div key={entry.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        {m ? `${m.first_name[0]}${m.last_name[0]}` : '?'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-800 truncate">{m ? `${m.first_name} ${m.last_name}` : 'Unknown'}</p>
+                        <p className="text-xs text-slate-400">{entry.category} · {entry.note || '—'} · {entry.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-sm font-semibold text-emerald-600">+{entry.points}</span>
+                      <button onClick={() => deletePointEntry(entry.id)} className="text-slate-300 hover:text-red-500 text-xl leading-none transition-colors">×</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        </>}
+
         {/* ── POLLS TAB ────────────────────────────────────────────── */}
         {tab === 'polls' && <>
 
@@ -1494,6 +1707,34 @@ export default function AdminPanel() {
               {brandingSaved ? 'Saved!' : 'Save branding'}
             </button>
           </form>
+        </section>
+
+        {/* Features */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Features</h2>
+          <p className="text-sm text-slate-500 mb-5">Control which sections members can access.</p>
+          <div className="space-y-0">
+            {[
+              { key: 'feature_events', label: 'Events & RSVPs', desc: 'Members can view and RSVP to events.' },
+              { key: 'feature_polls',  label: 'Polls & Voting',  desc: 'Members can see and vote on polls.' },
+              { key: 'feature_tree',   label: 'Family Tree',     desc: 'Members can explore the Big/Little tree.' },
+              { key: 'feature_inbox',  label: 'Member Inbox',    desc: 'Members receive and view notifications.' },
+              { key: 'feature_points', label: 'Points & Merit',  desc: 'Track participation and good standing.' },
+            ].map(({ key, label, desc }) => (
+              <div key={key} className="flex items-center justify-between gap-4 py-4 border-b border-slate-100 last:border-0">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{label}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                </div>
+                <button
+                  onClick={() => updateChapter({ [key]: chapter[key] === false ? true : false })}
+                  className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${chapter[key] !== false ? 'bg-blue-600' : 'bg-slate-300'}`}
+                >
+                  <div className={`absolute top-1.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${chapter[key] !== false ? 'translate-x-7' : 'translate-x-1.5'}`} />
+                </button>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Member portal settings */}

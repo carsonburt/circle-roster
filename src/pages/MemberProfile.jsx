@@ -25,7 +25,7 @@ const STATUS_STYLES = {
 
 export default function MemberProfile() {
   const { id } = useParams()
-  const { chapter, members, role, memberId, pendingEdits, submitProfileEdit, updateMember, addNotification, requestPasswordReset, terminology: t } = useChapter()
+  const { chapter, members, role, memberId, pendingEdits, submitProfileEdit, updateMember, addNotification, requestPasswordReset, terminology: t, pointLedger, pointCategories } = useChapter()
 
   const member = members.find(m => m.id === id)
   const mentor = member?.big_id ? members.find(m => m.id === member.big_id) : null
@@ -265,6 +265,48 @@ export default function MemberProfile() {
             )}
           </div>
         </div>
+
+        {/* Points card — shown to admin always, to member only on own profile */}
+        {(isAdmin || isOwnProfile) && chapter?.feature_points && (
+          <div className="md:col-span-3 bg-white rounded-2xl border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-slate-900">Points & Standing</h2>
+              {(() => {
+                const total = pointLedger.filter(e => e.memberId === id).reduce((sum, e) => sum + e.points, 0)
+                const threshold = chapter.good_standing_min_points || 0
+                const standing = threshold === 0 || total >= threshold
+                return (
+                  <div className="flex items-center gap-3">
+                    {threshold > 0 && (
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${standing ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {standing ? '✓ Good Standing' : '⚠ Below Threshold'}
+                      </span>
+                    )}
+                    <span className="text-2xl font-bold text-slate-900">{total} <span className="text-sm font-normal text-slate-400">pts</span></span>
+                  </div>
+                )
+              })()}
+            </div>
+            {pointLedger.filter(e => e.memberId === id).length === 0 ? (
+              <p className="text-sm text-slate-400">No points awarded yet.</p>
+            ) : (
+              <div className="space-y-0.5 max-h-52 overflow-y-auto">
+                {pointLedger.filter(e => e.memberId === id).map(entry => (
+                  <div key={entry.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                    <div>
+                      <p className="text-sm text-slate-700 font-medium">{entry.category}</p>
+                      {entry.note && <p className="text-xs text-slate-400">{entry.note}</p>}
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-4">
+                      <p className="text-sm font-bold text-emerald-600">+{entry.points} pts</p>
+                      <p className="text-xs text-slate-400">{entry.date}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowEdit(false)}>

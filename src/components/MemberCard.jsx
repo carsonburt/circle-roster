@@ -22,7 +22,10 @@ function avatarGradient(name) {
 }
 
 export default function MemberCard({ member }) {
-  const { terminology: t } = useChapter()
+  const { terminology: t, chapter, pointLedger } = useChapter()
+  const showStanding = chapter?.feature_points && (chapter?.good_standing_min_points || 0) > 0
+  const memberPoints = showStanding ? pointLedger.filter(e => e.memberId === member.id).reduce((sum, e) => sum + e.points, 0) : 0
+  const inGoodStanding = memberPoints >= (chapter?.good_standing_min_points || 0)
   const initials = `${member.first_name[0]}${member.last_name[0]}`
   const gradient = avatarGradient(member.first_name + member.last_name)
 
@@ -41,9 +44,16 @@ export default function MemberCard({ member }) {
               <p className="font-semibold text-slate-900 truncate text-sm group-hover:text-blue-600 transition-colors">
                 {member.first_name} {member.last_name}
               </p>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${STATUS_STYLES[member.status] || STATUS_STYLES.inactive}`}>
-                {member.status}
-              </span>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[member.status] || STATUS_STYLES.inactive}`}>
+                  {member.status}
+                </span>
+                {showStanding && (
+                  <span className={`text-xs font-bold ${inGoodStanding ? 'text-emerald-500' : 'text-amber-500'}`} title={inGoodStanding ? 'Good standing' : 'Below threshold'}>
+                    {inGoodStanding ? '✓' : '!'}
+                  </span>
+                )}
+              </div>
             </div>
             {member.position
               ? <p className="text-xs font-semibold truncate mt-0.5" style={{ color: '#4F46E5' }}>{member.position}</p>

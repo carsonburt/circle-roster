@@ -88,12 +88,14 @@ export default function BottomNav() {
 
   const tabs = [
     { to: '/directory', label: 'Directory', Icon: IconDirectory },
-    { to: '/events', label: 'Events', Icon: IconCalendar },
-    { to: '/polls', label: 'Polls', Icon: IconPoll },
-    { to: '/tree', label: 'Tree', Icon: IconTree },
+    ...(chapter?.feature_events !== false ? [{ to: '/events', label: 'Events', Icon: IconCalendar }] : []),
+    ...(chapter?.feature_polls !== false ? [{ to: '/polls', label: 'Polls', Icon: IconPoll }] : []),
+    ...(chapter?.feature_tree !== false ? [{ to: '/tree', label: 'Tree', Icon: IconTree }] : []),
     ...(role === 'admin'
       ? [{ to: '/admin', label: 'Admin', Icon: IconSettings }]
-      : [{ to: '/inbox', label: 'Inbox', Icon: IconInbox, badge: memberUnread }]
+      : chapter?.feature_inbox !== false
+      ? [{ to: '/inbox', label: 'Inbox', Icon: IconInbox, badge: memberUnread }]
+      : []
     ),
   ]
 

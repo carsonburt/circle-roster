@@ -9,6 +9,12 @@
   custom_team: null, custom_tree_title: null,
   primary_color: '#1D5FE8', logo_url: '/logo.png',
   member_edits_require_approval: true,
+  feature_events: true,
+  feature_polls: true,
+  feature_tree: true,
+  feature_inbox: true,
+  feature_points: false,
+  good_standing_min_points: 0,
 }
 
 export const mockMembers = [
@@ -320,3 +326,12 @@ export const mockPolls = [
     closes_at: '2026-05-10T21:00',
   },
 ]
+
+export const mockPointCategories = [
+  { id: 'pc1', name: 'Chapter Meeting', points: 10 },
+  { id: 'pc2', name: 'Community Service', points: 25 },
+  { id: 'pc3', name: 'Event Attendance', points: 5 },
+  { id: 'pc4', name: 'On-Time Dues', points: 15 },
+]
+
+export const mockPointLedger = []

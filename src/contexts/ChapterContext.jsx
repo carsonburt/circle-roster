@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { getTerminology } from '../lib/terminology'
-import { mockChapter, mockMembers, mockEvents, mockAnnouncements, mockDuesTerms, mockMeetings, mockPolls } from '../lib/mockData'
+import { mockChapter, mockMembers, mockEvents, mockAnnouncements, mockDuesTerms, mockMeetings, mockPolls, mockPointCategories, mockPointLedger } from '../lib/mockData'
 
 function load(key, fallback) {
   try {
@@ -21,6 +21,8 @@ export function ChapterProvider({ children }) {
   const [polls, setPolls] = useState(() => load('cr_polls', mockPolls))
   const [pendingEdits, setPendingEdits] = useState(() => load('cr_pendingEdits', []))
   const [notifications, setNotifications] = useState(() => load('cr_notifications', []))
+  const [pointCategories, setPointCategories] = useState(() => load('cr_pointCategories', mockPointCategories))
+  const [pointLedger, setPointLedger] = useState(() => load('cr_pointLedger', mockPointLedger))
 
   useEffect(() => { localStorage.setItem('cr_chapter', JSON.stringify(chapter)) }, [chapter])
   useEffect(() => { localStorage.setItem('cr_members', JSON.stringify(members)) }, [members])
@@ -31,6 +33,8 @@ export function ChapterProvider({ children }) {
   useEffect(() => { localStorage.setItem('cr_polls', JSON.stringify(polls)) }, [polls])
   useEffect(() => { localStorage.setItem('cr_pendingEdits', JSON.stringify(pendingEdits)) }, [pendingEdits])
   useEffect(() => { localStorage.setItem('cr_notifications', JSON.stringify(notifications)) }, [notifications])
+  useEffect(() => { localStorage.setItem('cr_pointCategories', JSON.stringify(pointCategories)) }, [pointCategories])
+  useEffect(() => { localStorage.setItem('cr_pointLedger', JSON.stringify(pointLedger)) }, [pointLedger])
   const [role, setRole] = useState(() => localStorage.getItem('cr_role') || null)
   const [memberId, setMemberIdState] = useState(() => localStorage.getItem('cr_memberId') || null)
   const loading = false
@@ -126,6 +130,31 @@ export function ChapterProvider({ children }) {
       })
     }
     setPendingEdits(prev => prev.filter(e => e.id !== editId))
+  }
+
+  function addPointCategory(name, points) {
+    setPointCategories(prev => [...prev, { id: `pc${Date.now()}`, name, points: Number(points) }])
+  }
+
+  function deletePointCategory(id) {
+    setPointCategories(prev => prev.filter(c => c.id !== id))
+  }
+
+  function awardPoints({ memberId, categoryId, points, note }) {
+    const category = pointCategories.find(c => c.id === categoryId)
+    setPointLedger(prev => [{
+      id: `pl${Date.now()}`,
+      memberId,
+      categoryId,
+      points: Number(points),
+      note: note || '',
+      category: category?.name || '',
+      date: new Date().toISOString().split('T')[0],
+    }, ...prev])
+  }
+
+  function deletePointEntry(id) {
+    setPointLedger(prev => prev.filter(e => e.id !== id))
   }
 
   function resetAllPasswords(password) {
@@ -292,6 +321,8 @@ export function ChapterProvider({ children }) {
       toggleDuesForTerm, setAllDuesForTerm, updateTermLabel, finalizeTerm,
       addMeeting, deleteMeeting, toggleAttendee, setMeetingAttendees,
       addPoll, deletePoll, closePoll, castVote,
+      pointCategories, pointLedger,
+      addPointCategory, deletePointCategory, awardPoints, deletePointEntry,
       refreshChapter: () => {},
     }}>
       {children}
