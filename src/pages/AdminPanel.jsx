@@ -24,10 +24,16 @@ export default function AdminPanel() {
     addMeeting, deleteMeeting, toggleAttendee, setMeetingAttendees,
     addPoll, deletePoll, closePoll,
     pendingEdits, approveEdit, rejectEdit, resetAllPasswords,
+    notifications, addNotification, markNotificationRead, deleteNotification,
   } = useChapter()
 
   // Active tab
   const [tab, setTab] = useState('members')
+  useEffect(() => {
+    if (tab === 'inbox') {
+      notifications.filter(n => n.toMemberId === null && !n.read).forEach(n => markNotificationRead(n.id))
+    }
+  }, [tab])
 
   // Attendance
   const [meetingForm, setMeetingForm] = useState({ title: '', date: '' })
@@ -258,15 +264,23 @@ export default function AdminPanel() {
   const activeMembers = members.filter(m => m.status === 'active')
   const brandColor = chapter?.primary_color || '#4F46E5'
 
+  const adminNotifications = notifications.filter(n => n.toMemberId === null)
+  const adminUnread = adminNotifications.filter(n => !n.read).length
+
   const TABS = [
     { key: 'members',    label: 'Members' },
     { key: 'approvals',  label: 'Approvals', count: pendingEdits.length },
+    { key: 'inbox',      label: 'Inbox',     count: adminUnread },
     { key: 'attendance', label: 'Attendance' },
     { key: 'dues',       label: 'Dues' },
     { key: 'polls',      label: 'Polls' },
     { key: 'content',    label: 'Content' },
     { key: 'settings',   label: 'Settings' },
   ]
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  }
 
   const sortedMeetings = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
 
@@ -577,6 +591,49 @@ export default function AdminPanel() {
                         ))}
                       </div>
                     )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        </>}
+
+        {/* ── INBOX TAB ───────────────────────────────────────────── */}
+        {tab === 'inbox' && <>
+
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Admin Inbox</h2>
+          <p className="text-sm text-slate-500 mb-5">Member requests and account notifications.</p>
+          {adminNotifications.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-sm">No notifications.</div>
+          ) : (
+            <div className="space-y-3">
+              {adminNotifications.map(n => {
+                const fromMember = n.fromMemberId ? members.find(m => m.id === n.fromMemberId) : null
+                const icons = { password_reset_request: '🔑', profile_approved: '✅', profile_rejected: '❌', password_changed: '🔒' }
+                return (
+                  <div key={n.id} className={`border rounded-xl p-4 flex items-start gap-3 ${n.read ? 'border-slate-200' : 'border-blue-200 bg-blue-50/30'}`}>
+                    <span className="text-xl flex-shrink-0 mt-0.5">{icons[n.type] || '📬'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${n.read ? 'text-slate-700' : 'text-slate-900'}`}>{n.title}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{n.message}</p>
+                      <p className="text-xs text-slate-400 mt-1">{formatDate(n.createdAt)}</p>
+                      {n.type === 'password_reset_request' && fromMember && (
+                        <button
+                          onClick={() => { setPasswordModal(fromMember); setPasswordModalValue(''); setPasswordModalSaved(false) }}
+                          className="mt-2 text-xs text-white px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          Reset password for {fromMember.first_name}
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteNotification(n.id)}
+                      className="text-slate-300 hover:text-slate-500 text-xl leading-none flex-shrink-0 transition-colors"
+                    >×</button>
                   </div>
                 )
               })}
@@ -1481,6 +1538,12 @@ export default function AdminPanel() {
                 onClick={() => {
                   if (!passwordModalValue.trim()) return
                   updateMember(passwordModal.id, { password: passwordModalValue.trim() })
+                  addNotification({
+                    toMemberId: passwordModal.id,
+                    type: 'password_changed',
+                    title: 'Password reset by admin',
+                    message: 'Your password has been reset by your chapter admin.',
+                  })
                   setPasswordModalSaved(true)
                   setTimeout(() => setPasswordModal(null), 800)
                 }}

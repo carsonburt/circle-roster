@@ -20,6 +20,7 @@ export function ChapterProvider({ children }) {
   const [meetings, setMeetings] = useState(() => load('cr_meetings', mockMeetings))
   const [polls, setPolls] = useState(() => load('cr_polls', mockPolls))
   const [pendingEdits, setPendingEdits] = useState(() => load('cr_pendingEdits', []))
+  const [notifications, setNotifications] = useState(() => load('cr_notifications', []))
 
   useEffect(() => { localStorage.setItem('cr_chapter', JSON.stringify(chapter)) }, [chapter])
   useEffect(() => { localStorage.setItem('cr_members', JSON.stringify(members)) }, [members])
@@ -29,6 +30,7 @@ export function ChapterProvider({ children }) {
   useEffect(() => { localStorage.setItem('cr_meetings', JSON.stringify(meetings)) }, [meetings])
   useEffect(() => { localStorage.setItem('cr_polls', JSON.stringify(polls)) }, [polls])
   useEffect(() => { localStorage.setItem('cr_pendingEdits', JSON.stringify(pendingEdits)) }, [pendingEdits])
+  useEffect(() => { localStorage.setItem('cr_notifications', JSON.stringify(notifications)) }, [notifications])
   const [role, setRole] = useState(() => localStorage.getItem('cr_role') || null)
   const [memberId, setMemberIdState] = useState(() => localStorage.getItem('cr_memberId') || null)
   const loading = false
@@ -67,13 +69,62 @@ export function ChapterProvider({ children }) {
     }
   }
 
+  function addNotification({ toMemberId = null, fromMemberId = null, type, title, message }) {
+    setNotifications(prev => [{
+      id: `n${Date.now()}`,
+      toMemberId,
+      fromMemberId,
+      type,
+      title,
+      message,
+      read: false,
+      createdAt: new Date().toISOString(),
+    }, ...prev])
+  }
+
+  function markNotificationRead(id) {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+  }
+
+  function deleteNotification(id) {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
+  function requestPasswordReset(mId) {
+    const m = members.find(mb => mb.id === mId)
+    addNotification({
+      toMemberId: null,
+      fromMemberId: mId,
+      type: 'password_reset_request',
+      title: 'Password Reset Request',
+      message: `${m?.first_name} ${m?.last_name} requested a password reset.`,
+    })
+  }
+
   function approveEdit(editId) {
     const edit = pendingEdits.find(e => e.id === editId)
-    if (edit) updateMember(edit.memberId, edit.fields)
+    if (edit) {
+      updateMember(edit.memberId, edit.fields)
+      addNotification({
+        toMemberId: edit.memberId,
+        type: 'profile_approved',
+        title: 'Profile update approved',
+        message: 'Your profile changes have been approved and are now live.',
+      })
+    }
     setPendingEdits(prev => prev.filter(e => e.id !== editId))
   }
 
   function rejectEdit(editId) {
+    const edit = pendingEdits.find(e => e.id === editId)
+    if (edit) {
+      addNotification({
+        toMemberId: edit.memberId,
+        type: 'profile_rejected',
+        title: 'Profile update not approved',
+        message: 'Your profile update was reviewed and not approved by the admin.',
+      })
+    }
     setPendingEdits(prev => prev.filter(e => e.id !== editId))
   }
 
@@ -234,6 +285,7 @@ export function ChapterProvider({ children }) {
       role, memberId, terminology, loading,
       login, logout,
       pendingEdits, setMemberId, submitProfileEdit, approveEdit, rejectEdit, resetAllPasswords,
+      notifications, addNotification, markNotificationRead, deleteNotification, requestPasswordReset,
       updateChapter, addMember, updateMember, deleteMember,
       addEvent, updateEvent, deleteEvent, toggleRsvp,
       addAnnouncement, deleteAnnouncement, pinAnnouncement,

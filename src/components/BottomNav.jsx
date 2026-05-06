@@ -72,17 +72,29 @@ const IconSettings = ({ filled }) => (
   </svg>
 )
 
+const IconInbox = ({ filled }) => (
+  <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={filled ? 2.25 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 12h-6l-2 3H10l-2-3H2"/>
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" fill={filled ? 'currentColor' : 'none'}/>
+  </svg>
+)
+
 export default function BottomNav() {
   const location = useLocation()
-  const { chapter, role } = useChapter()
+  const { chapter, role, memberId, notifications } = useChapter()
   const brandColor = chapter?.primary_color || '#4F46E5'
+
+  const memberUnread = notifications.filter(n => n.toMemberId === memberId && !n.read).length
 
   const tabs = [
     { to: '/directory', label: 'Directory', Icon: IconDirectory },
     { to: '/events', label: 'Events', Icon: IconCalendar },
     { to: '/polls', label: 'Polls', Icon: IconPoll },
     { to: '/tree', label: 'Tree', Icon: IconTree },
-    ...(role === 'admin' ? [{ to: '/admin', label: 'Admin', Icon: IconSettings }] : []),
+    ...(role === 'admin'
+      ? [{ to: '/admin', label: 'Admin', Icon: IconSettings }]
+      : [{ to: '/inbox', label: 'Inbox', Icon: IconInbox, badge: memberUnread }]
+    ),
   ]
 
   return (
@@ -91,7 +103,7 @@ export default function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex">
-        {tabs.map(({ to, label, Icon }) => {
+        {tabs.map(({ to, label, Icon, badge }) => {
           const isActive = location.pathname === to ||
             (to === '/directory' && location.pathname.startsWith('/members'))
           return (
@@ -101,7 +113,14 @@ export default function BottomNav() {
               className="flex-1 flex flex-col items-center py-2.5 gap-0.5 transition-colors"
               style={{ color: isActive ? brandColor : '#94A3B8' }}
             >
-              <Icon filled={isActive} />
+              <div className="relative">
+                <Icon filled={isActive} />
+                {badge > 0 && (
+                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
+                    {badge > 9 ? '9+' : badge}
+                  </span>
+                )}
+              </div>
               <span className={`text-[10px] font-semibold tracking-wide ${isActive ? '' : 'font-medium'}`}>
                 {label}
               </span>

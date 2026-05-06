@@ -9,6 +9,7 @@ import JoinPage from './pages/JoinPage'
 import Events from './pages/Events'
 import Polls from './pages/Polls'
 import LandingPage from './pages/LandingPage'
+import Inbox from './pages/Inbox'
 import PrivateRoute from './components/PrivateRoute'
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           <Route path='/admin' element={<PrivateRoute adminOnly><AdminPanel /></PrivateRoute>} />
           <Route path='/events' element={<PrivateRoute><Events /></PrivateRoute>} />
           <Route path='/polls' element={<PrivateRoute><Polls /></PrivateRoute>} />
+          <Route path='/inbox' element={<PrivateRoute><Inbox /></PrivateRoute>} />
           <Route path='/join' element={<JoinPage />} />
           <Route path='/' element={<LandingPage />} />
         </Routes>
