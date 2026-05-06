@@ -9,6 +9,7 @@ function headerToField(header) {
   if (h.includes('email')) return 'email'
   if (h.includes('phone')) return 'phone'
   if (h.includes('status')) return 'status'
+  if (h.includes('position') || h.includes('title') || h.includes('role')) return 'position'
   if (h.includes('cohort') || h.includes('pledge')) return 'pledge_class'
   if (h.includes('year') || h.includes('grad')) return 'class_year'
   if (h.includes('big') || h.includes('mentor')) return 'big_name'
@@ -30,7 +31,7 @@ function parseRows(rawRows, existingMembers) {
     .map((row, index) => {
       const member = {
         first_name: '', last_name: '', email: '', phone: '',
-        status: 'active', pledge_class: '', class_year: '',
+        status: 'active', position: '', pledge_class: '', class_year: '',
         big_name: '', linkedin_url: '', major: '', high_school: '',
         _rowIndex: index + 2,
       }
@@ -110,12 +111,12 @@ export default function ImportModal({ onClose }) {
   function downloadTemplate() {
     const headers = [
       'First Name', 'Last Name', 'Email', 'Phone',
-      'Status', 'Cohort', 'Class Year', 'Big (Full Name)', 'LinkedIn URL',
+      'Status', 'Position', 'Cohort', 'Class Year', 'Big (Full Name)', 'LinkedIn URL',
       'Major / Minor', 'High School',
     ]
     const example = [
       'Jane', 'Smith', 'jane.smith@email.com', '(555) 123-4567',
-      'active', 'Fall 2025', '2029', 'James Whitfield', 'linkedin.com/in/janesmith',
+      'active', 'VP of Finance', 'Fall 2025', '2029', 'James Whitfield', 'linkedin.com/in/janesmith',
       'Finance / Economics', 'Lincoln High School',
     ]
     const ws = XLSX.utils.aoa_to_sheet([headers, example])
@@ -134,6 +135,7 @@ export default function ImportModal({ onClose }) {
         email: r.email || '',
         phone: r.phone || '',
         status: r.status,
+        position: r.position || '',
         pledge_class: r.pledge_class || '',
         class_year: r.class_year,
         linkedin_url: r.linkedin_url || '',
@@ -142,7 +144,7 @@ export default function ImportModal({ onClose }) {
         big_id: r.big_id,
         show_email: true,
         show_phone: true,
-        show_linkedin: false,
+        show_linkedin: true,
         avatar_url: null,
       })
     })

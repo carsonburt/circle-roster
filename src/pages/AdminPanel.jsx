@@ -162,14 +162,17 @@ export default function AdminPanel() {
 
   function handleExportDues() {
     const selected = duesTerms.filter(t => exportTermIds.has(t.id))
-    const headers = ['Name', 'Status', ...selected.map(t => t.label)]
+    const headers = ['Name', 'Email', 'Status', 'Cohort', 'Class Year', ...selected.map(t => t.label)]
     const rows = members.map(m => [
       `${m.first_name} ${m.last_name}`,
+      m.email || '',
       m.status,
+      m.pledge_class || '',
+      m.class_year || '',
       ...selected.map(t => t.payments[m.id] === undefined ? '—' : t.payments[m.id] ? 'Paid' : 'Unpaid'),
     ])
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-    ws['!cols'] = headers.map((_, i) => ({ wch: i === 0 ? 24 : 14 }))
+    ws['!cols'] = headers.map((_, i) => ({ wch: i === 0 ? 24 : i === 1 ? 26 : 14 }))
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Dues')
     XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-dues.xlsx`)
@@ -188,20 +191,21 @@ export default function AdminPanel() {
         return { m, total, catTotals }
       })
       .sort((a, b) => b.total - a.total)
-    const headers = ['Rank', 'Name', 'Pledge Class', 'Total Points',
+    const headers = ['Rank', 'Name', 'Email', 'Pledge Class', 'Total Points',
       ...(threshold > 0 ? ['Good Standing'] : []),
       ...pointCategories.map(c => c.name),
     ]
     const data = rows.map(({ m, total, catTotals }, idx) => [
       idx + 1,
       `${m.first_name} ${m.last_name}`,
+      m.email || '',
       m.pledge_class || '',
       total,
       ...(threshold > 0 ? [total >= threshold ? 'Yes' : 'No'] : []),
       ...catTotals,
     ])
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
-    ws['!cols'] = headers.map((_, i) => ({ wch: i === 1 ? 24 : 14 }))
+    ws['!cols'] = headers.map((_, i) => ({ wch: i === 1 ? 24 : i === 2 ? 26 : 14 }))
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Points')
     XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-points.xlsx`)
@@ -209,22 +213,24 @@ export default function AdminPanel() {
 
   function exportMeetingAttendance(meeting) {
     const d = new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const headers = ['Name', 'Status', 'Pledge Class', 'Attendance']
+    const headers = ['Name', 'Email', 'Status', 'Position', 'Pledge Class', 'Attendance']
     const rows = activeMembers.map(m => [
       `${m.first_name} ${m.last_name}`,
+      m.email || '',
       m.status,
+      m.position || '',
       m.pledge_class || '',
       meeting.attendee_ids.includes(m.id) ? 'Present' : 'Absent',
     ])
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-    ws['!cols'] = [{ wch: 24 }, { wch: 10 }, { wch: 14 }, { wch: 10 }]
+    ws['!cols'] = [{ wch: 24 }, { wch: 26 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 10 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Attendance')
     XLSX.writeFile(wb, `${meeting.title.replace(/\s+/g, '-')}-${meeting.date}.xlsx`)
   }
 
   function exportAttendanceSummary(filteredMeetings) {
-    const headers = ['Name', 'Status', 'Pledge Class',
+    const headers = ['Name', 'Email', 'Status', 'Position', 'Pledge Class',
       ...filteredMeetings.map(m => `${m.title} (${m.date})`),
       'Total', '% Attended',
     ]
@@ -234,7 +240,9 @@ export default function AdminPanel() {
       const pct = total ? Math.round((attended / total) * 100) : 0
       return [
         `${m.first_name} ${m.last_name}`,
+        m.email || '',
         m.status,
+        m.position || '',
         m.pledge_class || '',
         ...filteredMeetings.map(mtg => mtg.attendee_ids.includes(m.id) ? 'Present' : 'Absent'),
         `${attended}/${total}`,
@@ -242,7 +250,7 @@ export default function AdminPanel() {
       ]
     })
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-    ws['!cols'] = headers.map((h, i) => ({ wch: i === 0 ? 24 : i < 3 ? 14 : Math.max(h.length + 2, 12) }))
+    ws['!cols'] = headers.map((h, i) => ({ wch: i === 0 ? 24 : i === 1 ? 26 : i < 5 ? 14 : Math.max(h.length + 2, 12) }))
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Attendance Summary')
     XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-attendance-summary.xlsx`)
@@ -314,25 +322,26 @@ export default function AdminPanel() {
 
   // ── Invite ────────────────────────────────────────────────────
   function exportCSV() {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Cohort', 'Class Year', t.mentor]
+    const headers = [
+      'First Name', 'Last Name', 'Email', 'Phone', 'Status',
+      'Position', 'Cohort', 'Class Year', t.mentor,
+      'LinkedIn URL', 'Major / Minor', 'High School', 'Admin',
+    ]
     const rows = members.map(m => {
       const big = members.find(b => b.id === m.big_id)
       return [
         m.first_name, m.last_name, m.email || '', m.phone || '',
-        m.status, m.pledge_class || '', m.class_year || '',
+        m.status, m.position || '', m.pledge_class || '', m.class_year || '',
         big ? `${big.first_name} ${big.last_name}` : '',
+        m.linkedin_url || '', m.major || '', m.high_school || '',
+        m.is_admin ? 'Yes' : 'No',
       ]
     })
-    const csv = [headers, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-      .join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${chapter.name.replace(/\s+/g, '-')}-roster.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    ws['!cols'] = headers.map((h, i) => ({ wch: i < 2 ? 20 : i === 8 ? 22 : i === 9 ? 28 : 16 }))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Roster')
+    XLSX.writeFile(wb, `${chapter.name.replace(/\s+/g, '-')}-roster.xlsx`)
   }
 
   function generateInvite(e) {
