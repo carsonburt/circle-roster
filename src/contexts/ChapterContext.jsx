@@ -303,6 +303,20 @@ export function ChapterProvider({ children }) {
     ))
   }
 
+  function resetToMockData() {
+    setChapter(mockChapter)
+    setMembers(mockMembers)
+    setEvents(mockEvents)
+    setAnnouncements(mockAnnouncements)
+    setDuesTerms(mockDuesTerms)
+    setMeetings(mockMeetings)
+    setPolls(mockPolls)
+    setPendingEdits([])
+    setNotifications([])
+    setPointCategories(mockPointCategories)
+    setPointLedger(mockPointLedger)
+  }
+
   function resetToFreshChapter(chapterUpdates) {
     const freshChapter = { ...chapter, ...chapterUpdates }
     setChapter(freshChapter)
@@ -344,7 +358,7 @@ export function ChapterProvider({ children }) {
       addPoll, deletePoll, closePoll, castVote,
       pointCategories, pointLedger,
       addPointCategory, deletePointCategory, awardPoints, deletePointEntry, resetPointLedger,
-      resetToFreshChapter,
+      resetToMockData, resetToFreshChapter,
       refreshChapter: () => {},
     }}>
       {children}

@@ -4,8 +4,9 @@ import { useChapter } from '../contexts/ChapterContext'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login, members, setMemberId } = useChapter()
-  const [step, setStep] = useState('choose')
+  const { login, members, setMemberId, resetToMockData } = useChapter()
+
+  const [step, setStep] = useState('choose') // 'choose' | 'pick' | 'password'
   const [search, setSearch] = useState('')
   const [selectedMember, setSelectedMember] = useState(null)
   const [password, setPassword] = useState('')
@@ -15,6 +16,12 @@ export default function Login() {
   const filtered = (members || []).filter(m =>
     `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
   )
+
+  function handleDemoLogin() {
+    resetToMockData()
+    login('admin')
+    navigate('/directory')
+  }
 
   function handleMemberSelect(m) {
     setSelectedMember(m)
@@ -38,7 +45,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel */}
+
+      {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 text-white" style={{ background: 'linear-gradient(135deg, #0F1F6B 0%, #0a1445 100%)' }}>
         <div>
           <Link to="/" className="text-sm text-blue-300 hover:text-white transition-colors font-medium">
@@ -46,14 +54,8 @@ export default function Login() {
           </Link>
         </div>
         <div className="flex flex-col items-center text-center">
-          <img
-            src="/logo.png"
-            alt="Circle Roster"
-            className="w-36 h-36 object-contain mb-6 drop-shadow-2xl"
-          />
-          <h1 className="text-4xl font-bold leading-tight mb-3">
-            Build Your Circle.
-          </h1>
+          <img src="/logo.png" alt="Circle Roster" className="w-36 h-36 object-contain mb-6 drop-shadow-2xl" />
+          <h1 className="text-4xl font-bold leading-tight mb-3">Build Your Circle.</h1>
           <p className="text-blue-200 text-lg leading-relaxed max-w-sm">
             Member directories, Big/Little family trees, and alumni connections — built for every kind of group.
           </p>
@@ -77,36 +79,74 @@ export default function Login() {
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center bg-slate-50 px-4 sm:px-6">
         <div className="w-full max-w-sm">
+
+          {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center mb-8 gap-2">
             <img src="/logo.png" alt="Circle Roster" className="w-16 h-16 object-contain" />
             <span className="text-2xl font-bold text-[#0F1F6B] tracking-tight">Circle Roster</span>
-            <span className="text-sm text-slate-500 font-medium">Build Your Circle.</span>
           </div>
 
+          {/* ── Step: choose ───────────────────────────────── */}
           {step === 'choose' && (
             <>
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">Welcome back</h2>
-              <p className="text-slate-500 text-sm mb-8">Sign in to access your chapter</p>
-              <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">Welcome</h2>
+              <p className="text-slate-500 text-sm mb-7">Choose how you'd like to continue.</p>
+
+              {/* Demo option */}
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg flex-shrink-0">🎮</div>
+                  <div>
+                    <p className="font-semibold text-slate-900 text-sm">Explore the Demo</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      See all features with sample chapter data. No account needed — just click and explore.
+                    </p>
+                  </div>
+                </div>
                 <button
-                  onClick={() => { login('admin'); navigate('/directory') }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors shadow-sm"
+                  onClick={handleDemoLogin}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 >
-                  Enter as Admin (Demo)
-                </button>
-                <button
-                  onClick={() => setStep('pick')}
-                  className="w-full bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-xl font-semibold border border-slate-200 transition-colors"
-                >
-                  Enter as Member
+                  Try demo →
                 </button>
               </div>
-              <p className="text-center text-xs text-slate-400 mt-8">
-                Full login coming soon &mdash; Supabase auth integration in progress.
+
+              {/* Divider */}
+              <div className="relative flex items-center my-5">
+                <div className="flex-1 border-t border-slate-200" />
+                <span className="mx-3 text-xs text-slate-400 font-medium">or</span>
+                <div className="flex-1 border-t border-slate-200" />
+              </div>
+
+              {/* Real account option */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg flex-shrink-0">🔐</div>
+                  <div>
+                    <p className="font-semibold text-slate-900 text-sm">Sign in to your chapter</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Access your real chapter data with your member account.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setStep('pick')}
+                  className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Find my profile →
+                </button>
+              </div>
+
+              <p className="text-center text-sm text-slate-500 mt-6">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
+                  Get started free →
+                </Link>
               </p>
             </>
           )}
 
+          {/* ── Step: pick member ──────────────────────────── */}
           {step === 'pick' && (
             <>
               <button
@@ -152,6 +192,7 @@ export default function Login() {
             </>
           )}
 
+          {/* ── Step: password ─────────────────────────────── */}
           {step === 'password' && selectedMember && (
             <>
               <button
@@ -206,6 +247,7 @@ export default function Login() {
               </form>
             </>
           )}
+
         </div>
       </div>
     </div>
