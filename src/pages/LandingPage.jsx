@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 const FEATURES = [
@@ -67,6 +68,11 @@ const STEPS = [
 ]
 
 export default function LandingPage() {
+  const previewRef = useRef(null)
+  function scrollPreview(dir) {
+    previewRef.current?.scrollBy({ left: dir * 272, behavior: 'smooth' })
+  }
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -144,7 +150,27 @@ export default function LandingPage() {
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest text-center mb-6">
             A preview of what your members will see
           </p>
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x scrollbar-hide">
+          <div className="relative">
+            {/* Left arrow */}
+            <button
+              onClick={() => scrollPreview(-1)}
+              aria-label="Scroll left"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-lg transition-all"
+            >
+              ‹
+            </button>
+            {/* Right arrow */}
+            <button
+              onClick={() => scrollPreview(1)}
+              aria-label="Scroll right"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-lg transition-all"
+            >
+              ›
+            </button>
+            {/* Fade edges */}
+            <div className="pointer-events-none absolute left-9 top-0 bottom-2 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10" />
+            <div className="pointer-events-none absolute right-9 top-0 bottom-2 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10" />
+          <div ref={previewRef} className="flex gap-4 overflow-x-auto pb-2 snap-x scrollbar-hide px-10">
 
             {/* Member card */}
             <div className="snap-start flex-shrink-0 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 w-60">
@@ -231,6 +257,7 @@ export default function LandingPage() {
             </div>
 
           </div>
+          </div>{/* end relative wrapper */}
         </div>
       </section>
 
