@@ -136,7 +136,12 @@ export function ChapterProvider({ children }) {
         }
       }
 
-      if (!member?.chapters) { setLoading(false); return }
+      if (!member?.chapters) {
+        // Session exists but no matching member record — clear stale auth state
+        setRole(null); setMemberIdState(null); setIsLive(false)
+        localStorage.removeItem('cr_role'); localStorage.removeItem('cr_memberId')
+        setLoading(false); return
+      }
 
       const cid = member.chapter_id
       const [m, ev, ann, dt, mtg, pl, pc, plg, notif, pe] = await Promise.all([

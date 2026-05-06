@@ -64,6 +64,13 @@ export default function Signup() {
       })
       if (authError) throw authError
 
+      if (!authData.session) {
+        throw new Error(
+          'Email confirmation is enabled in your Supabase project. ' +
+          'Go to Authentication → Settings and disable "Confirm email", then try again.'
+        )
+      }
+
       const userId = authData.user.id
       const chapterId = crypto.randomUUID()
       const memberId = crypto.randomUUID()

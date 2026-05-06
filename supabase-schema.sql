@@ -179,6 +179,15 @@ create table if not exists pending_edits (
 );
 
 -- ============================================================
+-- Grants (required when running via SQL editor)
+-- ============================================================
+
+grant usage on schema public to anon, authenticated;
+grant all on all tables    in schema public to anon, authenticated;
+grant all on all sequences in schema public to anon, authenticated;
+grant execute on all functions in schema public to anon, authenticated;
+
+-- ============================================================
 -- Row Level Security
 -- ============================================================
 
