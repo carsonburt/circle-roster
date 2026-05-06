@@ -1280,6 +1280,7 @@ export default function AdminPanel() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Points</label>
               <input
                 type="number"
+                min="1"
                 value={awardPts}
                 onChange={e => setAwardPts(e.target.value)}
                 placeholder="0"

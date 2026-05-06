@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar'
 import BottomNav from '../components/BottomNav'
 import EmailModal from '../components/EmailModal'
 
-const VIEWER_ID = 'demo'
 const EMPTY_FORM = { title: '', description: '', date: '', time: '', location: '' }
 
 function formatDate(dateStr) {
@@ -17,7 +16,8 @@ function formatDate(dateStr) {
 }
 
 export default function Events() {
-  const { chapter, events, role, addEvent, updateEvent, deleteEvent, toggleRsvp } = useChapter()
+  const { chapter, events, role, memberId, addEvent, updateEvent, deleteEvent, toggleRsvp } = useChapter()
+  const viewerId = memberId || 'admin'
   const brandColor = chapter?.primary_color || '#4F46E5'
 
   const [tab, setTab] = useState('upcoming')
@@ -113,7 +113,7 @@ export default function Events() {
           <div className="space-y-3">
             {displayed.map(ev => {
               const { month, day, weekday } = formatDate(ev.date)
-              const isGoing = ev.rsvp_ids.includes(VIEWER_ID)
+              const isGoing = ev.rsvp_ids.includes(viewerId)
               const isPast = ev.date < today
 
               return (
@@ -177,7 +177,7 @@ export default function Events() {
                         </span>
                         {!isPast && (
                           <button
-                            onClick={() => toggleRsvp(ev.id, VIEWER_ID)}
+                            onClick={() => toggleRsvp(ev.id, viewerId)}
                             className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
                               isGoing
                                 ? 'bg-green-100 text-green-700 hover:bg-red-50 hover:text-red-500'
@@ -266,7 +266,7 @@ export default function Events() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
-                  type="text" required
+                  type="text"
                   value={form.location}
                   onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -3,8 +3,6 @@ import { useChapter } from '../contexts/ChapterContext'
 import Navbar from '../components/Navbar'
 import BottomNav from '../components/BottomNav'
 
-const VOTER_ID = 'demo'
-
 function ResultBars({ poll, myVote, brandColor }) {
   const totalVotes = Object.keys(poll.votes).length
   const counts = poll.options.reduce((acc, opt) => {
@@ -49,9 +47,9 @@ function ResultBars({ poll, myVote, brandColor }) {
   )
 }
 
-function PollCard({ poll, onVote, brandColor }) {
+function PollCard({ poll, onVote, brandColor, voterId }) {
   const [selected, setSelected] = useState(null)
-  const myVote = poll.votes[VOTER_ID]
+  const myVote = poll.votes[voterId]
   const hasVoted = !!myVote
   const showResults = hasVoted || poll.closed
 
@@ -100,7 +98,7 @@ function PollCard({ poll, onVote, brandColor }) {
             </button>
           ))}
           <button
-            onClick={() => { if (selected) onVote(poll.id, selected) }}
+            onClick={() => { if (selected) onVote(poll.id, voterId, selected) }}
             disabled={!selected}
             className="w-full mt-1 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: brandColor }}
@@ -114,14 +112,15 @@ function PollCard({ poll, onVote, brandColor }) {
 }
 
 export default function Polls() {
-  const { chapter, polls, castVote, terminology: t } = useChapter()
+  const { chapter, polls, memberId, castVote, terminology: t } = useChapter()
   const brandColor = chapter?.primary_color || '#4F46E5'
+  const voterId = memberId || 'admin'
 
   const openPolls = polls.filter(p => !p.closed)
   const closedPolls = polls.filter(p => p.closed)
 
-  function handleVote(pollId, optionId) {
-    castVote(pollId, VOTER_ID, optionId)
+  function handleVote(pollId, vId, optionId) {
+    castVote(pollId, vId, optionId)
   }
 
   return (
@@ -147,14 +146,14 @@ export default function Polls() {
         )}
 
         {openPolls.map(poll => (
-          <PollCard key={poll.id} poll={poll} onVote={handleVote} brandColor={brandColor} />
+          <PollCard key={poll.id} poll={poll} onVote={handleVote} voterId={voterId} brandColor={brandColor} />
         ))}
 
         {closedPolls.length > 0 && (
           <>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide pt-2">Past Polls</p>
             {closedPolls.map(poll => (
-              <PollCard key={poll.id} poll={poll} onVote={handleVote} brandColor={brandColor} />
+              <PollCard key={poll.id} poll={poll} onVote={handleVote} voterId={voterId} brandColor={brandColor} />
             ))}
           </>
         )}
